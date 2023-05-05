@@ -1,0 +1,47 @@
+easy
+ea:
+# --- # --- # --- #
+normal
+no:
+# --- # --- # --- #
+hard
+ＨＡＲＤ
+ha:
+# --- # --- # --- #
+★×
+☆×
+Difficulty
+Chart: 
+難易度
+ACFT風
+ACFT譜面
+ACFT譜面　
+AC譜面
+WARNING！
+EX
+ＥＸ
+extreme
+ACの
+EXTREAM
+# --- # --- # --- #
+$
+のみ：
+ のみ：
+:
+ :
+-
+ -
+=
+ =
+＝
+ ＝
+
+# --- # --- # --- #
+☆
+ ☆
+★
+ ★
+&starf;x
+ &starf;x
+*
+ *

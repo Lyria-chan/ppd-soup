@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>PPDweb</title>
+
+        <!-- Include eel.js - note this file doesn't exist in the 'web' directory -->
+        <script type='text/javascript' src='/eel.js'></script>
+        <script type='text/javascript' src='assets.js'></script>
+        <link rel='stylesheet' href='original/bootstrap.min.css'>
+        <link rel='stylesheet' href='main.css'>
+    </head>
+    <body>
+        <div id='loading' class='hideTransition'>
+			<span></span>
+			<span></span>
+			<span></span>
+		</div>
+        <div id="more" class='hideTransition'>
+			<div role='infopanel' id='infopanel'>
+                <ul class="nav nav-tabs" role="moreinfo" id="pageMore">
+                    <li role="presentation">
+                        <a href="#more" role="tab" data-toggle="tab">
+                            More
+                        </a>
+                    </li>
+                </ul>
+				<div></div>
+            </div>
+		</div>
+        <nav>
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a href="/PPDweb.html">
+                        PPDweb
+                    </a>
+                </div>
+            </div>
+        </nav>
+        <div class='container'>
+			<div id='name'>
+				<h3>PPDweb downloader</h3>
+				<i>not even alpha <b>but almost working</b></i><br>
+                <i>update 09.01.2023: it is actually working</i><br>
+                <i>update 15.04.2023: but maybe still not perfectly working</i><br>
+			</div>
+			<br>
+			<div id='searchbox' class='connected-3'>
+                <select>
+                    <!--<option value='any'>Any (WIP)</option>-->
+                    <option value='title'>Title</option>
+                    <option value='author'>Author ID</option>
+                </select>
+				<input type='text' id="kw" placeholder='Search for anything...'>
+				<button id='search'>Search</button><br><br>
+			</div>
+			
+			<div id='opt_div'>
+				<fieldset id='options_set'>
+					<legend>Display options</legend>
+
+					<!--<label>Sort:</label>
+					<input type='radio' name='sortDir' value='desc' id='sortDirDesc' checked>
+					<label for='desc'>descending</label>
+					<input type='radio' name='sortDir' value='asc' id='sortDirAsc'>
+					<label for='asc'>ascending</label>
+					<br>
+
+					<label>Sort by:</label>
+					<select>
+						<option value='date'>upload date</option>
+						<option value='title'>title</option>
+						<option value='author'>author</option>
+						<option value='downloads'>downloads</option>
+						<option value='csinput'>CSInput</option>
+						<option value='rating'>rating</option>
+						<option value='duration'>duration</option>
+					</select>
+					<br>-->
+
+					<label>Convert to romaji</label>
+					<input type='checkbox' id='convertToRomaji' checked>
+					<br><br>
+					
+				</fieldset>
+				
+				<fieldset id='filters_set'>
+					<legend>Filters</legend>
+					
+					<div class='connected-2'>
+						<button>Add</button>
+						<button>Clear all</button>
+					</div>
+					<br>
+					<ul id='filterList'>
+						<!--<li>
+							<label>Filter by</label>
+							<select>
+								<option value='title'>title</option>
+								<option value='author'>author</option>
+								<option value='date'>upload date</option>
+								<option value='csinput'>CSInput</option>
+								<option value='duration'>duration</option>
+							</select>
+							<select>
+								<option value='below'>below</option>
+								<option value='above'>above</option>
+							</select>
+							<label>containing</label>
+							<input class='filterValue'>
+						</li>-->
+						
+					</ul>
+				</fieldset>
+			</div>
+			
+			<button id='apply'>Apply</button>
+			<br><br>
+            
+            <div role='tabpanel' id='tabpanel'>
+                <ul class="nav nav-tabs" role="tablist" id="pageTab">
+                    <li role="presentation">
+                        <a href="#results" role="tab" data-toggle="tab">
+                            Results
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+			var filters = []
+            var sorting = {
+                sortBy: 'date',
+                sortDesc: true
+            }
+            search.addEventListener('click',downloadLevels)
+            kw.addEventListener('keypress',(event) => 
+            {
+                if (event.key === 'Enter')
+                {
+                    downloadLevels()
+                }
+            })
+			apply.addEventListener('click',applyDisplayOptions)
+            more.addEventListener('click',hideMore)
+			document.querySelector('#filters_set button:nth-of-type(1)').addEventListener('click',addFilter)
+			document.querySelector('#filters_set button:nth-of-type(2)').addEventListener('click',clearFilters)
+			
+            downloadLevels(maxpg = 2)
+            //downloading on start restr to 2 pg
+			
+            //debug
+            //kw.value = 'bug'
+            //downloadLevels()
+            
+            //debug
+            /*
+            levellistdebug = [
+    {
+        "id": "9f361d5fbc8b5b3a081d6522264b1ead",
+        "jpTitle": "ないない (TV size)",
+        "title": "Nainai (TV size)",
+        "jpAuthor": "Hiki8man",
+        "author": "Hiki8man",
+        "csinput": true,
+        "date": 1669593164,
+        "downloads": "13",
+        "bpm": "130",
+        "rating": "5",
+        "voted": "2",
+        "duration": "1:30",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "",
+        "pExtreme": "16.79",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": 6.5,
+        "desc": "\n      [Lock]This chart use special script and event witch AFT/MM+/PH doesn't have,please don't port my charts to any other games \r\n【シャドーハウス】ED\r\ni creat it in 1 year ago and last week i finally remember to complete it_(:з」∠)_\r\n-------------------------------------------------------\r\n4 Key Chart\r\nExtreme ☆ 6.5\r\nBPM:130\r\ni'll add autoplay video soon\r\n\r\n2022/11/28 18:54\r\nFix 1ComboEach script combo check logic bug ,now it's should be like AFT( ゜- ゜)つロ\r\n2022/11/28 19:00\r\nFound another logic bug ,set it private to fix that bug\r\n2022/11/28 19:43\r\nFix ,set it public back_(:з」∠)_\r\n\r\nSpecial thanks: JohnnyKLawliet, Saella\r\n※use PerfectInput(CSInput同等) DivaScript DisableExceptACButton ACLifeV2_kai LifeBonus MarkGraphicChange 1ComboEach      \n    "
+    },{
+        "id": "932d00dde127c536c920e4f4927e1a01",
+        "jpTitle": "バグ / Bug (PaoBfly ver)",
+        "title": "Bagu / Bug (PaoBfly ver)",
+        "jpAuthor": "PaoBfly",
+        "author": "PaoBfly",
+        "csinput": true,
+        "date": 1656624455,
+        "downloads": "127",
+        "bpm": "186",
+        "rating": "",
+        "voted": "",
+        "duration": "2:50",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "",
+        "pExtreme": "43.39",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": 9.5,
+        "desc": "\n      かいりきベア／Kairiki bear\r\n\r\npa-pa-para, paranoia...\r\n\r\nThis Score has CSInput Script !!\r\n\r\nBPM: 186\r\n\r\n-DIFFICULTIES-\r\nEXTREME ★9.5\r\n\r\nchart preview\r\n[youtube id:4LxA_fxHg2I width:1280 height:720]      \n    "
+    },{
+        "id": "8bfc1bd1e460f3d905192845f034fc7e",
+        "jpTitle": "バグ | Bug",
+        "title": "Bagu | Bug",
+        "jpAuthor": "EgguTasteGood",
+        "author": "EgguTasteGood",
+        "csinput": true,
+        "date": 1655721912,
+        "downloads": "202",
+        "bpm": "186",
+        "rating": "5",
+        "voted": "1",
+        "duration": "2:50",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "29.18",
+        "pExtreme": "40.02",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": 7,
+        "sExtreme": 9,
+        "desc": "\n      NIGHTCORD LEN AHHHHHHHHH\r\n\r\nHARD: ★7 (2:56)\r\nEXTREME: ★9\r\n[youtube id:mKVEQFjS_0o width:640 height:360]\r\n- CS input included\r\n\r\nguruguru~~\r\n\r\nHatsune Miku version: https://youtu.be/FkO8ub83wss      \n    "
+    },{
+        "id": "ab62fdd5b2e05c4b7fd3553b3d3de34a",
+        "jpTitle": "バグ (Bug)",
+        "title": "Bagu (Bug)",
+        "jpAuthor": "Blue Star",
+        "author": "Blue Star",
+        "csinput": false,
+        "date": 1655688917,
+        "downloads": "376",
+        "bpm": "186",
+        "rating": "5",
+        "voted": "1",
+        "duration": "2:51",
+        "pEasy": "",
+        "pNormal": "15.78",
+        "pHard": "30.68",
+        "pExtreme": "37.55",
+        "sEasy": "",
+        "sNormal": 5,
+        "sHard": 7,
+        "sExtreme": 9,
+        "desc": "\n      Producer : かいりきベア (Kairiki bear)\r\n\r\nSekai version : target URL\r\nVocals : 宵崎奏, 朝比奈まふゆ, 東雲絵名, 暁山瑞希, 鏡音レン (Yoisaki Kanade, Asahina Mafuyu, Shinonome Ena, Akiyama Mizuki, Kagamine Len)\r\n\r\nVocaloid version : https://youtu.be/FkO8ub83wss\r\nVocals : 初音ミク (Hatsune Miku)\r\n\r\nUpdate : added Hard\r\nUpdate 2 : added Normal\r\n\r\nNormal ☆5\r\nHard ☆7\r\nExtreme ☆9\r\nI plan to add Extra Extreme later\r\n[youtube id:90PiTfj7fpQ]      \n    "
+    },{
+        "id": "dbda7d756d6821859ef140e3e1333b55",
+        "jpTitle": "クリぼっち撲滅委員会",
+        "title": "Kuri Botchi Bokumetsu Iinkai",
+        "jpAuthor": "Sach",
+        "author": "Sach",
+        "csinput": true,
+        "date": 1639864800,
+        "downloads": "56",
+        "bpm": "145",
+        "rating": "",
+        "voted": "",
+        "duration": "3:55",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "",
+        "pExtreme": "28.86",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": 8,
+        "desc": "\n      Music and lyrics by Mame Fox \r\nEXTREME ☆8.0 \r\nchristmas\r\njust in a week !\r\n(playable without CSInput) \r\n[youtube id:NjPl7VOBuGI width:1280 height:720]\r\n      \n    "
+    },{
+        "id": "191c2e1c2837baca88cc50236cb1da48",
+        "jpTitle": "MELTY BLOOD (GAME Ver)",
+        "title": "MELTY BLOOD (GAME Ver)",
+        "jpAuthor": "Hiki8man",
+        "author": "Hiki8man",
+        "csinput": true,
+        "date": 1634167383,
+        "downloads": "74",
+        "bpm": "134",
+        "rating": "4",
+        "voted": "2",
+        "duration": "1:24",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "",
+        "pExtreme": "18.71",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": 8.5,
+        "desc": "\n      This is my first chart\r\nHope you will enjoy it\r\nPS: This chart doesn't have csinput for some reason , and you maby need set latency to -0.030 (seem like only me always set latency +0.030)\r\nExtreme ☆ 8.5\r\n540P Movie(Fix 4:3 to 16:9): https://mega.nz/file/D9cyyRhI#ozeWosgZcPNrhx76yrFb_vf-Zd8IlpV1UKKo9lpt1pw\r\n\r\n2021/10/14 fix 148-151combo fly angle\r\n2021/10/15 change 78-82 combo silde placement(thanks キウイ味の御手洗団子)\r\n[youtube id:0-5MA5w_3dU]\r\n2022/11/28\r\nfix 1ComboEach script a logic bug_(:з」∠)_\r\nfix some note fly angle\r\nchange some note placement\r\nadd skip script\r\ni'll add exex ver soon\r\n\r\n※use 1ComboEach ACLifeV2_kai DisableExceptACFTButton VectorReverse08改 skip      \n    "
+    },{
+        "id": "3fb996e388a7ca100343a2c00dd5ea25",
+        "jpTitle": "It's Bugsnax!",
+        "title": "It's Bugsnax!",
+        "jpAuthor": "Sach",
+        "author": "Sach",
+        "csinput": true,
+        "date": 1630544400,
+        "downloads": "55",
+        "bpm": "108",
+        "rating": "5",
+        "voted": "2",
+        "duration": "3:31",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "",
+        "pExtreme": "19.24",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": 7,
+        "desc": "\n      Music and lyrics by Kero Kero Bonito\r\nEXTREME ☆7.0 \r\nhappy bunger \r\n(playable without CSInput) \r\n[youtube id:TmZfkqY6XzU width:1280 height:720]      \n    "
+    },{
+        "id": "04e7694406d844c316bbcf16d146480a",
+        "jpTitle": "うみろ(元こじろー) (Umiro (former Kojiro))",
+        "title": "Umiro (Moto Kojiroo) (Umiro (former Kojiro))",
+        "jpAuthor": "Kyle",
+        "author": "Kyle",
+        "csinput": true,
+        "date": 1625982151,
+        "downloads": "54",
+        "bpm": "132",
+        "rating": "",
+        "voted": "",
+        "duration": "3:44",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "",
+        "pExtreme": "33.8",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": "",
+        "desc": "\n      This chart took me a long time for no reason :SUPERNICE: but it's ok because i'm glad how it turned out! Bye, sally! Time for bed, but don't get the dog treats! bye bye sally! Don't let the bugs bite the bed! 9 Stars and playable without csinput! (reupload cuz idk how to update)      \n    "
+    },{
+        "id": "ed7b3f06c2985b5e116702d196b21c07",
+        "jpTitle": "ヒトガタ / HITOGATA",
+        "title": "Hitogata / HITOGATA",
+        "jpAuthor": "Noelahg",
+        "author": "Noelahg",
+        "csinput": false,
+        "date": 1618679785,
+        "downloads": "99",
+        "bpm": "150",
+        "rating": "5",
+        "voted": "3",
+        "duration": "3:48",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "",
+        "pExtreme": "29.37",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": "",
+        "desc": "\n      This is a gimmick chart.\r\n\r\nThis chart has a few bugs with other mods:\r\n\"Real PDA-FT Skin \" will cause problems with some of the visual tricks\r\n\"Clear!\" effects may play at inappropriate times\r\nIf you are using non-PS4 button icons... good luck. \r\n\r\nNone of the abovementioned bugs should prevent you from playing, but they may cause things to behave unintentionally.  I made this a few months back but debated not publishing it due to the bug issues but ... well, you've been warned.\r\n\r\nSpecial thanks to [user id:JohnnyKLawliet] for making me want to mess with some of this stuff.  The scripts involved are my own creations, but I didn't realize this was possible until he did it with his Dramaturgy chart.\r\n\r\nExtreme: 8.5*\r\n[youtube id:veS2luZmskk]\r\n[Lock]      \n    "
+    },{
+        "id": "3c6d7fbae9b11cb082b4b05dbf32db5e",
+        "jpTitle": "エンヴィーベイビー / Envy Baby",
+        "title": "Enviibeibii / Envy Baby",
+        "jpAuthor": "Noelahg",
+        "author": "Noelahg",
+        "csinput": false,
+        "date": 1614985200,
+        "downloads": "192",
+        "bpm": "171",
+        "rating": "4",
+        "voted": "4",
+        "duration": "2:17",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "",
+        "pExtreme": "15.61",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": 9,
+        "desc": "\n      Messing around with scripting some more \r\n\r\nThere is a bug with the % gauge which does not effect gameplay if you are using skins which have it.\r\n\r\nI have heard reports that this occasionally registers button inputs wrong... though I have not been able to reproduce these issues.\r\n\r\nDifficulty: 9*\r\n[youtube id:e0X62s10aHk]\r\n[Lock]      \n    "
+    },{
+        "id": "c33997f089927ddd6a490fbdfed7a692",
+        "jpTitle": "むしみこうにゃーのハッピッピー 【IOSYS】",
+        "title": "Mushimikounyaano Happippii (Iosys)",
+        "jpAuthor": "Cyan",
+        "author": "Cyan",
+        "csinput": true,
+        "date": 1592057082,
+        "downloads": "191",
+        "bpm": "225",
+        "rating": "5",
+        "voted": "2",
+        "duration": "2:14",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "",
+        "pExtreme": "34.31",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": "",
+        "desc": "\n      Collab with [user id:NotTheCulprit] (Lauren)\r\nCSInput script is enabled\r\n\r\nBasically, Reimu becomes an idol and Wriggle Nightbug is forced to join the group and then they go to Shangri-La and it's pretty cool bro\r\n\r\n[youtube id:xSY2lBnnjXk]      \n    "
+    },{
+        "id": "5812a8909e2416bdc2cf3ef5fa4d9c96",
+        "jpTitle": "KSGR地獄の刑",
+        "title": "KSGR Jigoku No Kei",
+        "jpAuthor": "Noelahg",
+        "author": "Noelahg",
+        "csinput": true,
+        "date": 1575561499,
+        "downloads": "175",
+        "bpm": "160",
+        "rating": "4",
+        "voted": "2",
+        "duration": "3:32",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "31.11",
+        "pExtreme": "32.4",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": "",
+        "desc": "\n      *CSInput is embedded in this chart*\r\n\r\n** If you crash approximately 30 seconds into the song, I'm sorry. This is a known bug with the F2nd sprites used. If you have shaders disabled in your ppd configuration, as soon as you load an F2nd sprite the game will error. Turn shaders on to resolve this.\r\n\r\n* CSInputはこのスコアに埋め込まれています*\r\n\r\n**曲に30秒ほどぶつかったら、すみません。これは使用されているF2ndスプライトの既知のバグです。あなたのppd設定でシェーダが無効になっている場合、あなたがF2ndスプライトをロードするとすぐにゲームはエラーになります。これを解決するにはシェーダをオンにします。\r\n\r\n[youtube id:oc-wWa5vOZQ]\r\n\r\nExtreme 9.5*\r\nHard 8.5* @ 3;56      \n    "
+    },{
+        "id": "418740bbb366804d3260eef09e7737c4",
+        "jpTitle": "PPD 10th Anniversary - PPD Tower Defense",
+        "title": "PPD 10th Anniversary - PPD Tower Defense",
+        "jpAuthor": "ネット・イメージ",
+        "author": "Netto・imeeji",
+        "csinput": false,
+        "date": 1571386210,
+        "downloads": "164",
+        "bpm": "0",
+        "rating": "4.67",
+        "voted": "6",
+        "duration": "5:00",
+        "pEasy": "0",
+        "pNormal": "0",
+        "pHard": "0",
+        "pExtreme": "0",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": "",
+        "desc": "\n      Annyonhaseyo, Pasang Milae imnida.\r\nThis is a Tower Defense game using Flowscript (The Script of PPD) based on Vector TD and Protector seires.\r\nVector TD: http://www.arcadeboss.com/game-1823-9-vector-td-2.html\r\nProtector: https://www.kongregate.com/games/undefined/protector\r\n\r\nThis game have 3 different sets of waves, and a random mode that changes every time.\r\n\r\nThis game may be hard to start, Press L+R in the map after you closed the welcome message and the wave data to open the menu, you can read the rules there.\r\n\r\nI recommand you disable all of your mods before playing this, but you can still use them if you want.\r\n\r\nAddition video link:http://www.mediafire.com/file/15aqw2aqlyom773/empty_10min.mp4/file\r\n\r\nCongratulations on the PPD 10th anniversary!\r\nPPD10周年おめでとう！\r\n\r\nSource: [script id:e788b75ff5fb9394aa6e009fa2ed193d]\r\n\r\n2019/10/20 14:43 Bug fix\r\n2019/10/28 1:41 Another bug fix, also changed the BGM from wav to ogg to reduce size.\r\n2019/10/28 3:19 Rebalanced this game. Ranking reseted.\r\n2019/10/28 22:38 Rebalanced again.\r\n2019/11/01 1:49 Setting miss fix\r\n2019/11/05 3:39 Changed the scoring system to make it less luck-based in Random Mode.\r\n2019/11/09 6:01 Updated Hints and FAQ\r\n2019/11/25 0:49 Fixed the Absorber of Lv.10\r\n2019/11/27 14:06 Hard set done - It took me lots of time to testing this set, the other 2 sets will be done faster than this because those 2 are easier than this!\r\n2019/12/27 4:43 Normal and Easy done - I have many things to do those days, so it was slow but I still made them. This is the final version of this game.      \n    "
+    },{
+        "id": "3a90317e8be628e043a077a2a9ade831",
+        "jpTitle": "インフルエンサー・イズ・デッド/ Influencer is Dead",
+        "title": "Infuruensaa・izu・deddo / Influencer is Dead",
+        "jpAuthor": "Noelahg",
+        "author": "Noelahg",
+        "csinput": true,
+        "date": 1564164000,
+        "downloads": "871",
+        "bpm": "144",
+        "rating": "5",
+        "voted": "20",
+        "duration": "4:22",
+        "pEasy": "",
+        "pNormal": "",
+        "pHard": "29.47",
+        "pExtreme": "30.26",
+        "sEasy": "",
+        "sNormal": "",
+        "sHard": "",
+        "sExtreme": "",
+        "desc": "\n      I call it an ACFTF2 chart\r\n\r\n*CSInput is embedded in this chart*\r\n\r\n** If you crash approximately 30 seconds into the song, I'm sorry. This is a known bug with the F2nd sprites used.  If you have shaders disabled in your ppd configuration, as soon as you load an F2nd sprite the game will error.  Turn shaders on to resolve this.\r\n\r\n* CSInputはこのスコアに埋め込まれています*\r\n\r\n**曲に30秒ほどぶつかったら、すみません。これは使用されているF2ndスプライトの既知のバグです。あなたのppd設定でシェーダが無効になっている場合、あなたがF2ndスプライトをロードするとすぐにゲームはエラーになります。これを解決するにはシェーダをオンにします。\r\n\r\nExtreme:  9*\r\nHard: 8*  @ 4:42 \r\n\r\n[youtube id:5DwjFhsffuI]\r\n[Lock]      \n    "
+    },{
+        "id": "31383744ff1d6ce54d2c7c98b3f475ed",
+        "jpTitle": "METEOR",
+        "title": "METEOR",
+        "jpAuthor": "Yu",
+        "author": "Yu",
+        "csinput": false,
+        "date": 1542564951,
+        "downloads": "621",
+        "bpm": "170",
+        "rating": "3.75",
+        "voted": "4",
+        "duration": "3:02",
+        "pEasy": "8.86",
+        "pNormal": "17.81",
+        "pHard": "26.84",
+        "pExtreme": "33.07",
+        "sEasy": 3,
+        "sNormal": 4.5,
+        "sHard": 6.5,
+        "sExtreme": 8.5,
+        "desc": "\n      DIVELAさんの「METEOR」です。\r\n\r\nACFT風4つボタン譜面です。\r\nEasy☆3/Normal☆4.5/Hard☆6.5/Extreme☆8.5\r\n\r\n素晴らしいEditPVは、wankoさん作成のものをお借りしました。\r\nhttps://www.youtube.com/watch?v=JI6LZ3dap90\r\n\r\n使用動画は2番とイントロアウトロをカットしたショート版です。\r\nまたもや一部オリジナルには無い演出があります。\r\n[user_img id:289 width:300] \r\n\r\n\r\n(動画予備)\r\nhttps://drive.google.com/open?id=1PvA2nqgCxvZSZK0sWQPeqbuG3mB2s597\r\n\r\n      \n    "
+    }]
+			levellistdebug = convertLl(levellistdebug)
+            displayTable(levellistdebug)*/
+            
+        </script>
+    </body>
+</html>
+
+<!--
+todo list:
+downloading 
+filtering by difficulty (maybe also sorting?)
+description with raw html from soup (temp solved, still needs rework)
+scrolled description (but is it really needed?)
+all interaction with python things, loading progress, downloading info and errors (js functions called by python)
+p a g e s 
+menu panel rework (css)
+filters/options in separate window
+-->
