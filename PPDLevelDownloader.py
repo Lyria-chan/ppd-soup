@@ -268,12 +268,15 @@ def scrape_stars_n_desc(lv, li):
 #handle('bibio4545', 'author', 1)
 #handle('rjri', 'author', '1')
 #handle('I♡')
-handle('machinegun')
+# handle('machinegun')
 
 # ZMIENIĆ PRZED DANIEM DLA MICHAŁA
 # li.append(desc) => li.append(desc_html)
 """
 todo:
+    - finish star aproximation
+    
+    
 - stars aproximation if no scraping
 - downloading data and loading from that (json files)
 - checking if levels are already there

@@ -203,7 +203,7 @@ with requests.Session() as session:
                         found_count += 1
                         with open('assets\log.txt','a') as log:
                             log.write(f"{song['name']}, rank {checked_count+1}, {song['url']}\n")
-                        dll.fastLvDl(session, song_id, dldirectory, True, videoquality)
+                        dll.LvDl(session, song_id, dldirectory, True, videoquality)
             else:
                 if keyword['raw'] in html.lower():
                     print(f"\rKeyword \"{keyword['display']}\" found in \"{song['name']}\", rank {checked_count+1}" + 20 * " " +
@@ -212,7 +212,7 @@ with requests.Session() as session:
                     found_count += 1
                     with open('assets\log.txt','a') as log:
                         log.write(f"{song['name']}, rank {checked_count+1}, {song['url']}\n")
-                    dll.fastLvDl(session, song_id, dldirectory, True, videoquality)
+                    dll.LvDl(session, song_id, dldirectory, True, videoquality)
         checked_count += 1
         
         time_remaining = (round(time() - time_start,2) / checked_count) * (len(song_list) - checked_count)

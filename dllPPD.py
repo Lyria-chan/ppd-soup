@@ -1,4 +1,4 @@
-import requests, zipfile, os, re, pykakasi, json #, sqlite3
+import requests, zipfile, os, re, pykakasi, json, shutil #, sqlite3
 from niconico_dl import NicoNicoVideo
 from pytube import YouTube
 from bs4 import BeautifulSoup
@@ -8,45 +8,8 @@ from bs4 import BeautifulSoup
 # Set up the pykakasi converter
 kks = pykakasi.Kakasi()
 
-
-def slowLvDl(session, song_id, folder_path, iskakasi = 'True'):
-    for root, dirs, files in os.walk(folder_path):
-        for dirname in dirs:
-            file_path = os.path.join(folder_path, dirname, "limk.txt")
-            try:
-                with open(file_path, "r") as file:
-                    alt_id = file.read().strip()
-                    if song_id.strip() in alt_id:
-                        print('Chart is already downloaded!')
-                        file.close()
-                        return
-            except FileNotFoundError:
-                pass
-    song_url = 'https://projectdxxx.me/score/index/id/' + song_id
-    zip_url = 'https://projectdxxx.me/score-library/download/id/' + song_id
-    v_url, folder_title = getLimkAndTitle(session, song_url)
-    folder_title = zipDl(session, zip_url, folder_path, folder_title, iskakasi)
-    file_path = os.path.join(folder_path, folder_title, "limk.txt")
-    with open(file_path, "w") as file:
-        file.write(song_id)
-        file.close()
-    pattern = 'www.nicovideo.jp/watch/'
-    try:
-        yt_error_check = ytDl(session, v_url, folder_path, folder_title)
-        if yt_error_check == "VideoPrivate":
-            print("VIDEO IS PRIVATE")
-            os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[PRIVATED MOVIE] {folder_title}'))
-    except:
-        if re.match(pattern, v_url):
-            nicoDl(session, v_url, folder_path, folder_title)
-        else:
-            print("MISSING VIDEO")
-            os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[NO MOVIE] {folder_title}'))
-            return
-    print('Song downloaded, proceeding...                                     ', end='')
             
-# =============================================================================
-def fastLvDl(session, song_id, folder_path, iskakasi = 'True', vquality = 1):
+def LvDl(session, song_id, folder_path, iskakasi = 'True', vquality = 1, v_url = None, folder_title = None):
     for root, dirs, files in os.walk(folder_path):
         for dirname in dirs:
             file_path = os.path.join(folder_path, dirname, "limk.txt")
@@ -54,14 +17,30 @@ def fastLvDl(session, song_id, folder_path, iskakasi = 'True', vquality = 1):
                 with open(file_path, "r") as file:
                     alt_id = file.read().strip()
                     if song_id.strip() in alt_id:
-                        print('Chart is already downloaded!')
-                        file.close()
-                        return
+                        
+                        if dirname[0] == '[':
+                            while True:
+                                try:
+                                    file.close()
+                                    shutil.rmtree(os.path.join(folder_path, dirname))
+                                    try:
+                                        os.rmdir(os.path.join(folder_path, dirname))
+                                    except:
+                                        pass
+                                    break
+                                except PermissionError:
+                                    input("A file you're trying to access is in use, close it and press enter to continue...")
+                            print("Missing video found, redownloading...")
+                        else:
+                            print("Chart is already downloaded!")
+                            file.close()
+                            return
             except FileNotFoundError:
                 pass
     song_url = 'https://projectdxxx.me/score/index/id/' + song_id
     zip_url = 'https://projectdxxx.me/score-library/download/id/' + song_id
-    v_url, folder_title = getLimkAndTitle(session, song_url)
+    if not (v_url or folder_title):
+        v_url, folder_title = getLimkAndTitle(session, song_url)
     folder_title = zipDl(session, zip_url, folder_path, folder_title, iskakasi)
     file_path = os.path.join(folder_path, folder_title, "limk.txt")
     with open(file_path, "w") as file:
@@ -69,17 +48,27 @@ def fastLvDl(session, song_id, folder_path, iskakasi = 'True', vquality = 1):
         file.close()
     try:
         yt_error_check = ytDl(session, v_url, folder_path, folder_title)
-        if yt_error_check == "VideoPrivate":
-            print("VIDEO IS PRIVATE")
-            os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[PRIVATED MOVIE] {folder_title}'))
+        if yt_error_check:
+            if yt_error_check == "VideoPrivate":
+                flag = 'PRIVATED'
+            if yt_error_check == "VideoUnavailable":
+                flag = 'UNAVAILABLE'
+            print(f"VIDEO IS {flag}: {v_url}")
+            try:
+                os.rmdir(os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
+            except: 
+                pass
+            os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
+            return
     except:
         if 'nicovideo.jp/watch/' in v_url:
             nicoDl(session, v_url, folder_path, folder_title)
         else:
-            print("MISSING VIDEO")
+            print(f"MISSING VIDEO: {v_url}")
             os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[NO MOVIE] {folder_title}'))
             return
     print('Chart downloaded, proceeding...                                     ', end='')
+# =============================\================================================
 # =============================\================================================
             
     
@@ -131,6 +120,9 @@ def ytDl(session, url, folder_path, folder_title, vquality = 1):
     if 'This video is private' in yt.embed_html:
         # perform any necessary actions here
         return "VideoPrivate"
+    # print(yt.embed_html)
+    elif 'This video is unavailable'in yt.embed_html:
+        return "VideoUnavailable"
     quals = [1080, 720, 480, 360, 240, 144]
     for num in range(vquality, 6):
         video = yt.streams.filter(mime_type= "video/mp4", res = f'{quals[num]}p').first()
@@ -139,6 +131,7 @@ def ytDl(session, url, folder_path, folder_title, vquality = 1):
             break
         if video == None and num == 5:
             print('cos poszlo nie tak. ups')
+    return None
                     
 
 
@@ -272,8 +265,8 @@ def readJson(fname, type):
         obj = type()
     return obj
     
-with requests.session() as session:
-    slowLvDl(session, '2073d054d3fb0e8812dfd52c7cbbf048', r'C:\KHC\PPD\songs\testing', True)
+#with requests.session() as session:
+#    LvDl(session, 'c483cd9f64fcb74e6f62c6b93b9e38d1', r'C:\KHC\PPD\songs\TARGET SCORES', True)
 
 #with requests.Session() as session:
 #     ytDl(session, 'https://youtu.be/e0VtkZYtzrI', r'C:\KHC\PPD\songs\testing', 'TEST', 1)
@@ -284,6 +277,9 @@ with requests.session() as session:
 #test = refreshIdDatabase(r'C:\KHC\PPD\songs')
 """
 to do:
+
+    
+    
 - default path for save (?)
 - json save for the parsed data if keyword is ''
 - fix yt dl for 'topic' videos (no mp4) 
