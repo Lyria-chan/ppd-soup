@@ -17,6 +17,20 @@ function sortByKey(array, key)
     })
 }
 
+//================================================
+
+function zfill(num, len) 
+{
+    if (String(num).length < len)
+    {
+        return (Array(len).join("0") + num).slice(-len)
+    }
+    else
+    {
+        return String(num)
+    }
+}
+
 //================================================//
 // "More" tab
 //================================================//
@@ -60,7 +74,8 @@ function displayMore(no)
 	{
 		data += ll[no]['more']['voted']
 	}
-	data += '<br>Duration: ' + new Date(ll[no]['duration']*1000).toISOString().substring(14, 19)
+	//data += '<br>Duration: ' + new Date(ll[no]['duration']*1000).toISOString().substring(14, 19)
+    data += '<br>Duration: ' + zfill(Math.floor(ll[no]['duration']/60),2) + ':' + zfill(ll[no]['duration']%60,2)
 	data += '<br>BPM: ' + ll[no]['more']['bpm']
 	
 	
@@ -95,18 +110,22 @@ function displayMore(no)
 		data += '<br><a href="https://youtu.be/' + ytId + '">YouTube video</a>'
 	}
 	
+    //diff tab
 	data += '</div><div>Difficulty:'
 	for (let diff of ['Easy','Normal','Hard','Extreme'])
 	{
+        //if diff exists
 		if (ll[no]['difficulty']['p' + diff] != 0)
 		{
 			data += '<br>' + diff + ' - '
+            //if stars exist
 			if (ll[no]['difficulty']['s' + diff] != '')
 			{
                 if (!ll[no]['difficulty']['a' + diff])
                 {
 				    data += '<span>' + ll[no]['difficulty']['s' + diff] + '☆</span> (' + ll[no]['difficulty']['p' + diff] + ' pt)'
                 }
+                //if stars are approximated
                 else
                 {
                     data += '<span class="approx">' + ll[no]['difficulty']['s' + diff] + '☆</span> (' + ll[no]['difficulty']['p' + diff] + ' pt)'
