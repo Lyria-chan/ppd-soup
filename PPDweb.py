@@ -22,5 +22,8 @@ try:
 except: 
     pass
 
-eel.start('PPDweb.html', close_callback=close_callback)
+try:
+    eel.start('PPDweb.html', close_callback=close_callback)
+except OSError:
+    eel.start('PPDweb.html', close_callback=close_callback, mode='edge')
 # Start (this blocks and enters loop)

@@ -31,6 +31,27 @@ function zfill(num, len)
     }
 }
 
+//================================================
+
+function convertDuration(d)
+{
+    let hr
+    let min
+    if (d >= 3600)
+    {
+        hr = String(Math.floor(d/3600)) + ':'
+        d = d%3600
+        min = zfill(Math.floor(d/60),2)
+    }
+    else
+    {
+        hr = ''
+        min = Math.floor(d/60)
+    }
+    d = hr + min + ':' + zfill(d%60,2)
+    return d
+}
+
 //================================================//
 // "More" tab
 //================================================//
@@ -58,10 +79,10 @@ function displayMore(no)
 	}
 	data += '<br>Author ID: <a href="https://projectdxxx.me/user/index/id/' + ll[no]['more']['authorId'] + '"><img src="https://projectdxxx.me/api/get-avator/s/16/id/' + ll[no]['more']['authorId'] + '"> ' + ll[no]['more']['authorId'] + '</a>'
 	data += '<br>Upload date: ' + new Date(ll[no]['date']*1000).toLocaleDateString()
-	data += '<br>Downloads: ' + ll[no]['downloads']
 	data += '<br>CSInput: '
 	if (ll[no]['csinput']) {data += '✔️'}
 	else {data += '❌'}
+	data += '<br>Downloads: ' + ll[no]['downloads']
 	data += '<br>Rating: '
 	if (ll[no]['more']['voted'] == 0) {data += '-'}
 	else
@@ -75,7 +96,7 @@ function displayMore(no)
 		data += ll[no]['more']['voted']
 	}
 	//data += '<br>Duration: ' + new Date(ll[no]['duration']*1000).toISOString().substring(14, 19)
-    data += '<br>Duration: ' + zfill(Math.floor(ll[no]['duration']/60),2) + ':' + zfill(ll[no]['duration']%60,2)
+    data += '<br>Duration: ' + convertDuration(ll[no]['duration'])
 	data += '<br>BPM: ' + ll[no]['more']['bpm']
 	
 	
@@ -123,12 +144,12 @@ function displayMore(no)
 			{
                 if (!ll[no]['difficulty']['a' + diff])
                 {
-				    data += '<span>' + ll[no]['difficulty']['s' + diff] + '☆</span> (' + ll[no]['difficulty']['p' + diff] + ' pt)'
+				    data += '<span>☆' + ll[no]['difficulty']['s' + diff] + '</span> (' + ll[no]['difficulty']['p' + diff] + ' pt)'
                 }
                 //if stars are approximated
                 else
                 {
-                    data += '<span class="approx">' + ll[no]['difficulty']['s' + diff] + '☆</span> (' + ll[no]['difficulty']['p' + diff] + ' pt)'
+                    data += '<span class="approx">☆' + ll[no]['difficulty']['s' + diff] + '</span> (' + ll[no]['difficulty']['p' + diff] + ' pt)'
                 }
 			}
 			else
@@ -295,13 +316,14 @@ function applyDisplayOptions()
 	
 	let param3 = 15
 	let param4 = convertToRomaji.checked
+	let param5 = displayLessDiff.checked
 	
-	displayTable(levellist, sortBy = param1, sortDesc = param2, maxrows = param3, romaji = param4)
+	displayTable(levellist, sortBy = param1, sortDesc = param2, maxrows = param3, romaji = param4, less = param5)
 }
 
 //================================================
 
-function displayTable(ll, sortBy = 'date', sortDesc = true, maxrows = 15, romaji = true, filterBy = false)
+function displayTable(ll, sortBy = 'date', sortDesc = true, maxrows = 15, romaji = true, less = true, filterBy = false)
 {
 	//----------------------------------------------
 	// Loads and applies sorting, filtering
@@ -330,7 +352,7 @@ function displayTable(ll, sortBy = 'date', sortDesc = true, maxrows = 15, romaji
 		l['author'] = l['author'][Number(romaji)]
 		
 		l['date'] = new Date(l['date']*1000).toLocaleDateString()
-		l['duration'] = new Date(l['duration']*1000).toISOString().substring(14, 19)
+		l['duration'] = convertDuration(l['duration'])
 		
 		if (l['csinput']) {l['csinput'] = '✔️'}
 		else {l['csinput'] = '❌'}
@@ -346,12 +368,13 @@ function displayTable(ll, sortBy = 'date', sortDesc = true, maxrows = 15, romaji
 		l['no'] = no
 		no += 1
 	}
-	generateTable(ll)
+    
+	generateTable(ll,lessDiff=less)
 }
 
 //================================================
 
-function generateTable(ll)
+function generateTable(ll, lessDiff)
 {
 	//----------------------------------------------
 	// Does all the HTML work with
@@ -365,10 +388,10 @@ function generateTable(ll)
 
     //let original_keys = ["id", "jpTitle", "title", "jpAuthor", "author", "csinput", "date", "downloads", "bpm", "rating", "voted", "duration", "pEasy", "pNormal", "pHard", "pExtreme", "sEasy", "sNormal", "sHard", "sExtreme", "desc"]
 	
-	let keys = ['no',"title", "author", "date", "downloads", "csinput", "rating", "duration", "i"]
+	let keys = ['no','title', 'author', 'date', 'csinput', 'downloads', 'rating', 'duration', 'sEasy', 'sNormal', 'sHard', 'sExtreme', 'i']
     //additional hidden key 'more'
 	
-	let dkeys = ['No.',"Title", "Author", "Upload date", "Downloads", "CSInput", "Rating", "Duration", "More"]
+	let dkeys = ['No.','Title', 'Author', 'Upload date', 'CSInput', 'Downloads', 'Rating', 'Duration', 'Difficulty', 'More']
 	
     let table = document.createElement('table')
     let tbody = document.createElement('tbody')
@@ -385,12 +408,34 @@ function generateTable(ll)
         {
             cell.innerHTML = '<span class="sorting">' + key + '</span>'
         }*/
-        if (!['no','i'].includes(keys[n]))
+        
+        if (!['No.','More'].includes(dkeys[n]))
         {
             cell.classList.add('sorting')
-            cell.setAttribute('onclick','setSorting("' + keys[n] + '")')
+            if (dkeys[n] == 'Difficulty')
+            {
+                cell.setAttribute('onclick','setSorting("sExtreme")')
+            }
+            else if (dkeys[n] != 'More')
+            {
+                cell.setAttribute('onclick','setSorting("' + keys[n] + '")')
+            }
         }
         cell.innerText = dkeys[n]
+        
+        if (dkeys[n] == 'Difficulty')
+        {
+            if (!lessDiff)
+            {
+                cell.setAttribute('colspan','4')
+                cell.innerHTML = 'Difficulty<br><span>Easy | Normal | Hard | EX</span>'
+            }
+            else
+            {
+                cell.setAttribute('colspan','2')
+                cell.innerHTML = 'Difficulty<br><span>Hard | EX</span>'
+            }
+        }
         row.appendChild(cell)
     }
     tbody.appendChild(row)
@@ -417,6 +462,38 @@ function generateTable(ll)
                 a.setAttribute('href','https://projectdxxx.me/user/index/id/' + level['more']['authorId'])
                 a.innerText = level[key]
                 cell.appendChild(a)
+            }
+            else if (['sEasy', 'sNormal', 'sHard', 'sExtreme'].includes(key))
+            {
+                if (['sEasy', 'sNormal'].includes(key)&&lessDiff)
+                {
+                    continue
+                }
+                if (level['difficulty'][key])
+                {
+                    cell.innerText = '☆' + level['difficulty'][key]
+                }
+                
+                
+                //if stars exist
+                if (level['difficulty'][key] != '')
+                {
+                    let diff = key.slice(1)
+                    if (!level['difficulty']['a' + diff])
+                    {
+                        cell.innerHTML = '<span>☆' + level['difficulty']['s' + diff] + '</span>'
+                    }
+                    //if stars are approximated
+                    else
+                    {
+                        cell.innerHTML = '<span class="approx">☆' + level['difficulty']['s' + diff] + '</span>'
+                    }
+                }
+                else
+                {
+                    cell.innerHTML = ''
+                }
+                cell.setAttribute('class','diff')
             }
 			else if (key == 'i')
 			{
