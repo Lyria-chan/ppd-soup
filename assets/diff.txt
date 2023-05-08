@@ -3,6 +3,7 @@ ea:
 # --- # --- # --- #
 normal
 no:
+nomal
 # --- # --- # --- #
 hard
 ＨＡＲＤ
@@ -10,19 +11,18 @@ ha:
 # --- # --- # --- #
 ★×
 ☆×
-Difficulty
-Chart: 
-難易度
+extreme
 ACFT風
 ACFT譜面
-ACFT譜面　
 AC譜面
 WARNING！
-EX
-ＥＸ
-extreme
 ACの
 EXTREAM
+EX
+ＥＸ
+難易度
+Chart:
+Difficulty
 # --- # --- # --- #
 $
 のみ：
@@ -41,6 +41,10 @@ $
  ☆
 ★
  ★
+&star;
+ &star;
+&starf;
+ &starf;
 &starf;x
  &starf;x
 *

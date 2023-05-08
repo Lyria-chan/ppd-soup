@@ -203,13 +203,6 @@ def checkForCS(text, author = ''):
                     CSInput = False
     
     return CSInput
-    #     keywords = [line.strip() for line in f if line.strip() and not line.startswith('#')]
-    # for keyword in keywords:
-    #     if re.search(keyword, text, re.IGNORECASE):
-    #         CSInput = True
-    #         break
-    #     else:
-    #         CSInput = False
 
 
 def extractFloat(string):
@@ -279,7 +272,8 @@ def readJson(fname, type):
 to do:
 
     
-    
+- make folder if folder to be used doesn't exist
+
 - default path for save (?)
 - json save for the parsed data if keyword is ''
 - fix yt dl for 'topic' videos (no mp4) 
