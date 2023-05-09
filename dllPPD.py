@@ -37,15 +37,24 @@ def LvDl(session, song_id, folder_path, iskakasi = 'True', vquality = 1, v_url =
                             return
             except FileNotFoundError:
                 pass
-    song_url = 'https://projectdxxx.me/score/index/id/' + song_id
-    zip_url = 'https://projectdxxx.me/score-library/download/id/' + song_id
+    
+    
+    
+    
     if not (v_url or folder_title):
+        song_url = 'https://projectdxxx.me/score/index/id/' + song_id
         v_url, folder_title = getLimkAndTitle(session, song_url)
+    # downloads the zip
+    zip_url = 'https://projectdxxx.me/score-library/download/id/' + song_id
     folder_title = zipDl(session, zip_url, folder_path, folder_title, iskakasi)
+    # writes the limk
     file_path = os.path.join(folder_path, folder_title, "limk.txt")
+    
     with open(file_path, "w") as file:
         file.write(song_id)
         file.close()
+    # now youtube magic, can return the cause other than "NO MOVIE", after first try download from niconico is attempted
+    # if that doesn't work, the level gets marked as [NO MOVIE]
     try:
         yt_error_check = ytDl(session, v_url, folder_path, folder_title)
         if yt_error_check:
@@ -74,7 +83,7 @@ def LvDl(session, song_id, folder_path, iskakasi = 'True', vquality = 1, v_url =
     
 def getLimkAndTitle(session, url):
     # searches for for yt/nico download video link, should become obsolete
-    r = requests.get(url)
+    r = session.get(url)
     soup = BeautifulSoup(r.content, 'html.parser')
     limk = soup.label.next_sibling.next_sibling['value']
     title = soup.find("h3", class_='panel-title pull-left').get_text().strip()
@@ -84,8 +93,12 @@ def getLimkAndTitle(session, url):
 
 def zipDl(session, url, folder_path, folder_title, iskakasi):
     # downloads zip file from url and extracts it to folder path
-    zip_response = requests.get(url)
+    zip_response = session.get(url)
+    
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
     open(os.path.join(folder_path, 'folder.zip'), 'wb').write(zip_response.content)
+    
     with zipfile.ZipFile(os.path.join(folder_path, 'folder.zip'), 'r') as zip_ref:
         zip_ref.extractall(path=folder_path)
         alt_folder_title = zip_ref.namelist()[0].split("/",1)[0]
@@ -257,9 +270,19 @@ def readJson(fname, type):
         open(fname, 'w')
         obj = type()
     return obj
-    
+
+def callPath():
+    try:
+        with open(r'assets\path.txt') as f:
+            path = f.read()
+            f.close()
+            if not path.strip():
+                pass
+            return path
+    except:
+        print()
 #with requests.session() as session:
-#    LvDl(session, 'c483cd9f64fcb74e6f62c6b93b9e38d1', r'C:\KHC\PPD\songs\TARGET SCORES', True)
+#    LvDl(session, '60039ea4023f87de230931f72a8859b2', r'C:\KHC\PPD\songs\testing\', True)
 
 #with requests.Session() as session:
 #     ytDl(session, 'https://youtu.be/e0VtkZYtzrI', r'C:\KHC\PPD\songs\testing', 'TEST', 1)
@@ -268,14 +291,16 @@ def readJson(fname, type):
 #     nicoDl(session, 'https://www.nicovideo.jp/watch/sm12107146', r'C:\KHC\PPD\songs\testing', 'TEST')
 
 #test = refreshIdDatabase(r'C:\KHC\PPD\songs')
+#print(callPath())
 """
 to do:
 
-    
-- make folder if folder to be used doesn't exist
 
 - default path for save (?)
-- json save for the parsed data if keyword is ''
-- fix yt dl for 'topic' videos (no mp4) 
+- sqlite save for the parsed data if keyword is ''
+
+for later:
+    
+- if no movie, delete only the prefix once the level has downloaded
 """
 

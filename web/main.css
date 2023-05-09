@@ -327,7 +327,7 @@ div.connected-2 :nth-child(2), div.connected-3 :nth-child(2), div.connected-3 :n
     color: #fff;
 }
 
-span.approx {
+#infopanel > div > div > div:nth-of-type(2) > span.approx, td span.approx {
     color: #f0cf29;
 }
 
@@ -355,6 +355,10 @@ th > span {
 #opt_div > fieldset {
 	width:50%;
 	color:#999;
+}
+
+.container>.navbar-header {
+    margin-left: 0px;
 }
 
 th:nth-of-type(6),th:nth-of-type(7),th:nth-of-type(8),tr > td:nth-of-type(6),tr > td:nth-of-type(7),tr > td:nth-of-type(8) {display:none}

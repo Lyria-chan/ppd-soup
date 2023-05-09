@@ -112,7 +112,7 @@ def save_to_array(ll):
     global parsedinfo
     parsedinfo = []
     for lv in ll:
-        keys = ["dlLink", "id", "jpTitle", "title", "authorID", "jpAuthor", "author", "csinput", "date", "downloads", "bpm", "rating", "voted", "duration", "pEasy", "pNormal", "pHard", "pExtreme", "sEasy", "sNormal", "sHard", "sExtreme", "desc"]
+        keys = ["video", "id", "jpTitle", "title", "authorId", "jpAuthor", "author", "csinput", "date", "downloads", "bpm", "rating", "voted", "duration", "pEasy", "pNormal", "pHard", "pExtreme", "sEasy", "sNormal", "sHard", "sExtreme", "desc"]
         global li
         li = []
         lv_text = lv.get_text()
@@ -122,6 +122,7 @@ def save_to_array(ll):
         
         # dlLink + ID + is the level downloaded (requires ID that's why it's here) // NOT TRUE + jp title + translated title stuff
         li.append(lv.find("input", class_="form-control hidden").get('value'))
+        
         li.append(lv.find('a').get('href').split("/")[-1])
         li.append(lv.find('a').get('title'))
         li.append(dll.translateAndCapitalize(li[-1]))
@@ -276,29 +277,30 @@ def scrape_stars_n_desc(lv, li):
         except:
             pass
         
-        if len(li) > 22:
-            if not ((li[22] >= 7.0 and li[22] == li[21] and li[19] == '' and li[18] == '') or (li[22] <= 3.5 and li[22] == li[18] and li[20] != '' and li[19] != '' and li[18] != '')): 
-                global error_count
-                error_count += 1
-                print(f'ERROR WITH DIFFICULTIES AT ID {li[1]}, NAME {li[3]}')
-                print(f'Last known diffs: {li[18]}, {li[19]}, {li[20]}, {li[21]}, cause: {li[22]}')
-                print("------------------------------------------------------------------------------------")
-            li[22] = desc_html.prettify(formatter="html")
-        else:
-            li.append(desc_html.prettify(formatter="html"))
+        # 
+        # if len(li) > 22:
+        #     if not ((li[22] >= 7.0 and li[22] == li[21] and li[19] == '' and li[18] == '') or (li[22] <= 3.5 and li[22] == li[18] and li[20] != '' and li[19] != '' and li[18] != '')): 
+        #         global error_count
+        #         error_count += 1
+        #         print(f'ERROR WITH DIFFICULTIES AT ID {li[1]}, NAME {li[3]}')
+        #         print(f'Last known diffs: {li[18]}, {li[19]}, {li[20]}, {li[21]}, cause: {li[22]}')
+        #         print("------------------------------------------------------------------------------------")
+        #     li[22] = desc_html.prettify(formatter="html")
+        # else:
+        li.append(desc_html.prettify(formatter="html"))
     
 
 
 # run the soup kitchen
 # handle(input('Search for score: '))
 
-#handle('lumi2', 'author')
+#handle('ありふれたせかいせいふく[後編]')
 
 
 
 """
 todo:
-    
+
 - downloading data and loading from that (json/sqlite files?)
 - checking if levels are already there
 
