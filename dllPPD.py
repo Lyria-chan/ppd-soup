@@ -37,6 +37,7 @@ def LvDl(session, song_id, folder_path, iskakasi = 'True', vquality = 1, v_url =
                             return
             except FileNotFoundError:
                 pass
+
     
     
     
@@ -247,7 +248,7 @@ def refreshIdDatabase(path, save = True):
                             IDS.append(limk)
                             
                     except FileNotFoundError:
-                        print(f'Limk missing in {name}, continuing...')
+                        # print(f'Limk missing in {name}, continuing...')
                         continue
                     except Exception as e: print(e)
                 except FileNotFoundError:
@@ -270,17 +271,20 @@ def readJson(fname, type):
         open(fname, 'w')
         obj = type()
     return obj
+    
 
 def callPath():
-    try:
-        with open(r'assets\path.txt') as f:
+    while True:
+        with open(r'assets\path.txt', 'a+') as f:
+            f.seek(0)
             path = f.read()
             f.close()
             if not path.strip():
-                pass
-            return path
-    except:
-        print()
+                input((r"A path, enter it at assets\path.txt and press enter to continue..."))
+            else: break
+    return path
+
+        
 #with requests.session() as session:
 #    LvDl(session, '60039ea4023f87de230931f72a8859b2', r'C:\KHC\PPD\songs\testing\', True)
 
@@ -291,11 +295,10 @@ def callPath():
 #     nicoDl(session, 'https://www.nicovideo.jp/watch/sm12107146', r'C:\KHC\PPD\songs\testing', 'TEST')
 
 #test = refreshIdDatabase(r'C:\KHC\PPD\songs')
-#print(callPath())
+
 """
 to do:
-
-
+    
 - default path for save (?)
 - sqlite save for the parsed data if keyword is ''
 

@@ -37,7 +37,7 @@ def handle(kw, mode = 'def', maxpages = 0):
         if kw == '':
             levelslist = dll.readJson(r'assets\all.json', list)
         
-        
+        saved = dll.refreshIdDatabase(dll.callPath())
         
         # keep downloading and parsing pages until we reach a page with less than 10 results or we've reached our daily soup quota
         start_time = time.perf_counter()
@@ -101,18 +101,17 @@ def handle(kw, mode = 'def', maxpages = 0):
         elapsed_time = time.perf_counter() - start_time
         print(f"Elapsed time: {elapsed_time:0.2f} seconds")
 
-    parsedinfo = save_to_array(levelslist)
+    parsedinfo = save_to_array(levelslist, saved)
     return parsedinfo
     
 
-    
 
-
-def save_to_array(ll):
+def save_to_array(ll, saved = ''):
     global parsedinfo
     parsedinfo = []
     for lv in ll:
-        keys = ["video", "id", "jpTitle", "title", "authorId", "jpAuthor", "author", "csinput", "date", "downloads", "bpm", "rating", "voted", "duration", "pEasy", "pNormal", "pHard", "pExtreme", "sEasy", "sNormal", "sHard", "sExtreme", "desc"]
+        
+        keys = ["video", "id", "saved", "jpTitle", "title", "authorId", "jpAuthor", "author", "csinput", "date", "downloads", "bpm", "rating", "voted", "duration", "pEasy", "pNormal", "pHard", "pExtreme", "sEasy", "sNormal", "sHard", "sExtreme", "desc"]
         global li
         li = []
         lv_text = lv.get_text()
@@ -124,6 +123,8 @@ def save_to_array(ll):
         li.append(lv.find("input", class_="form-control hidden").get('value'))
         
         li.append(lv.find('a').get('href').split("/")[-1])
+        if li[-1] in saved: li.append(True)
+        else: li.append(False)
         li.append(lv.find('a').get('title'))
         li.append(dll.translateAndCapitalize(li[-1]))
         
@@ -193,7 +194,7 @@ def scrape_stars_n_desc(lv, li):
         for i in range(len(kws)-2):
             flag = True
             li_len = len(li)
-            if li[14+i] != '':
+            if li[15+i] != '':
                 for kwdiff in kws[i]:
                     if flag:
                         for kwmid in kws[-2]:
@@ -222,7 +223,7 @@ def scrape_stars_n_desc(lv, li):
         # search for difficulties that don't have stars before the number, can be wrong
         if all(x == '' for x in li[-4:]):
             for i, j in zip(range(len(kws)-2), reversed(range(len(kws)-2))):
-                if li[14+i] != '':
+                if li[15+i] != '':
                     for kwdiff in kws[i]:
                         for kwmid in kws[-2]:
                                 tempkw = (kwdiff+kwmid).lower()
@@ -234,7 +235,7 @@ def scrape_stars_n_desc(lv, li):
             if li[4] == 'lumi2':
                 index = desc.lower().find('h☆')
                 if index != -1:
-                    li[20] = dll.extractFloat(desc[index+2:index+7])
+                    li[21] = dll.extractFloat(desc[index+2:index+7])
     
         # welcome to abuse of the p counter!!!
         litest = ['', '', '', '']
@@ -272,11 +273,12 @@ def scrape_stars_n_desc(lv, li):
                     li.pop(-num-1)
                     
         try:
-            if li[22] == None:
-                li.pop(22)
+            if li[23] == None:
+                li.pop(23)
         except:
             pass
         
+
         # 
         # if len(li) > 22:
         #     if not ((li[22] >= 7.0 and li[22] == li[21] and li[19] == '' and li[18] == '') or (li[22] <= 3.5 and li[22] == li[18] and li[20] != '' and li[19] != '' and li[18] != '')): 
@@ -294,13 +296,13 @@ def scrape_stars_n_desc(lv, li):
 # run the soup kitchen
 # handle(input('Search for score: '))
 
+
 #handle('ありふれたせかいせいふく[後編]')
-
-
+#handle('', 'all', 1)
 
 """
 todo:
-
+   
 - downloading data and loading from that (json/sqlite files?)
 - checking if levels are already there
 
