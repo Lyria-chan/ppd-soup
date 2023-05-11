@@ -24,8 +24,8 @@ EX
 難易度
 Chart:
 Difficulty
+Difficuty
 # --- # --- # --- #
-$
 のみ：
  のみ：
 :
@@ -36,17 +36,15 @@ $
  =
 ＝
  ＝
-
+$
 # --- # --- # --- #
 ☆
  ☆
 ★
  ★
-&star;
- &star;
-&starf;
- &starf;
-&starf;x
- &starf;x
 *
  *
+★×
+ ★×
+☆×
+ ☆× 

@@ -8,8 +8,27 @@ from bs4 import BeautifulSoup
 # Set up the pykakasi converter
 kks = pykakasi.Kakasi()
 
+def callPath(path = '', mode = 'python'):
+    while True:
+        with open(r'assets\path.txt', 'a+') as f:
+            if path:
+                if path[-1] != "\\":
+                    path = path + '\\'
+                f.truncate(0)
+                f.write(path)
+                break
+            else:
+                f.seek(0)
+                path = f.read()
+                f.close()
+                if mode == 'python':
+                    if not path.strip():
+                        input((r"A path, enter it at assets\path.txt and press enter to continue..."))
+                else: break
+
+    return path
             
-def LvDl(session, song_id, folder_path, iskakasi = 'True', vquality = 1, v_url = None, folder_title = None):
+def LvDl(session, song_id, folder_path = callPath(), iskakasi = 'True', vquality = 1, v_url = None, folder_title = None):
     for root, dirs, files in os.walk(folder_path):
         for dirname in dirs:
             file_path = os.path.join(folder_path, dirname, "limk.txt")
@@ -38,9 +57,6 @@ def LvDl(session, song_id, folder_path, iskakasi = 'True', vquality = 1, v_url =
             except FileNotFoundError:
                 pass
 
-    
-    
-    
     
     if not (v_url or folder_title):
         song_url = 'https://projectdxxx.me/score/index/id/' + song_id
@@ -272,17 +288,6 @@ def readJson(fname, type):
         obj = type()
     return obj
     
-
-def callPath():
-    while True:
-        with open(r'assets\path.txt', 'a+') as f:
-            f.seek(0)
-            path = f.read()
-            f.close()
-            if not path.strip():
-                input((r"A path, enter it at assets\path.txt and press enter to continue..."))
-            else: break
-    return path
 
         
 #with requests.session() as session:

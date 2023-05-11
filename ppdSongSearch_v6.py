@@ -4,7 +4,7 @@ import dllPPD as dll
 
 
 # --------- # EDIT VALUES HERE # --------- #
-dldirectory = r'C:\KHC\PPD\songs\TARGET SCORES'
+dldirectory = fr'{dll.callPath()}TARGET SCORES'
     # the localization where the songs will be downloaded. write it inside of the  r' '. DO NOT DELETE THE R, THE PROGRAM WILL NOT WORK
 videoquality = 1
     # highest video quality the program will attempt to download from youtube. 0 is 1080p, 1 is 720p, 5 is 144p etc.

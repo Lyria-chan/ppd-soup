@@ -43,25 +43,28 @@ def loadList():
 
 song_list = loadList()
 
-try:
-    with open("assets\path.json","r") as f:
-        f = f.read()
-        path = json.loads(f)
-    print(path)
-except FileNotFoundError:
-    layout = [  [sg.Text("Looks like you haven't entered the songs' path yet!")],
-            [sg.Text("(This pop-up should only appear the first time you're running the program.)")],
-            [sg.Checkbox('Use the default path', default = True)],
-            [sg.Text('Enter a custom path:')],
-            [sg.Input()],
-            [sg.Button('OK')] ]
-    window = sg.Window('PPDFolderUpdate', layout)
-    event, values = window.read()
-    if values[0]:
-        path = "C:\KHC\PPD\songs"
-    else:
-        path = values[1]
-    window.close()
+path = dll.callPath()
+# =============================================================================
+# try:
+#     with open("assets\path.json","r") as f:
+#         f = f.read()
+#         path = json.loads(f)
+#     print(path)
+# except FileNotFoundError:
+#     layout = [  [sg.Text("Looks like you haven't entered the songs' path yet!")],
+#             [sg.Text("(This pop-up should only appear the first time you're running the program.)")],
+#             [sg.Checkbox('Use the default path', default = True)],
+#             [sg.Text('Enter a custom path:')],
+#             [sg.Input()],
+#             [sg.Button('OK')] ]
+#     window = sg.Window('PPDFolderUpdate', layout)
+#     event, values = window.read()
+#     if values[0]:
+#         path = "C:\KHC\PPD\songs"
+#     else:
+#         path = values[1]
+#     window.close()
+# =============================================================================
     
 with open("assets\path.json","w") as f:
     json.dump(path,f)
