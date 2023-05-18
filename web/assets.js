@@ -1,16 +1,3 @@
-/*
-! not used anymore
-function removeFromDict(dict,keys)
-{
-	for (key of keys)
-	{
-		delete dict[key]
-	}
-	return dict
-}*/
-
-//================================================
-
 function sortByKey(array, key) 
 {
     return array.sort(function(a, b) 
@@ -57,6 +44,16 @@ function convertDuration(d)
 }
 
 //================================================//
+// Exposed to Python
+//================================================//
+
+eel.expose(jsPrint)
+function jsPrint(str)
+{
+    console.log('<Python> ' + String(str))
+}
+
+//================================================//
 // "More" tab
 //================================================//
 
@@ -69,7 +66,7 @@ function displayMore(no)
 	//----------------------------------------------
 	
     
-	more.classList.toggle('hideTransition')
+	more.classList.remove('hideTransition')
     
 	let ll = JSON.parse(levellist)
     let l = ll[no]
@@ -103,32 +100,9 @@ function displayMore(no)
 	{
 		data += l.voted
 	}
-	//data += '<br>Duration: ' + new Date(ll[no]['duration']*1000).toISOString().substring(14, 19)
     data += '<br>Duration: ' + convertDuration(l.duration)
 	data += '<br>BPM: ' + l.bpm
 	
-	
-	
-	// OLD METHOD - soup getText from unicode to html
-	/*let desc = ll[no]['more']['desc'].replaceAll('\n','<br>').replaceAll('[Lock]','')
-	let ytId = desc.match(/\[youtube id:(.*)\]/i)
-	
-	if (ytId)
-	{
-		ytId = ytId[0].replace('[youtube id:','').replace(/\s(.*)\]/i,'').replace(']','')
-		desc = desc.replace(/\[youtube id:(.*)\]/i,'')
-		data += '<br><a href="https://youtu.be/' + ytId + '">YouTube video</a>'
-	}
-	data += '</div><div><p class="levelDesc">' + desc + '</p></div>'*/
-	
-	// NEW BUT NOT WORKING METHOD - will work with raw html from soup
-	/*data += '</div>' + ll[no]['more']['desc'].replace(' class="clearfix"','')
-    document.querySelector('#infopanel > div').innerHTML = data
-	// still uses unicode instead of html tags???
-	// ?   ?   ?
-	*/
-	
-	// TEMPORARY METHOD - 'raw' but not raw html changed from unicode
 	let desc = l.desc.replace('\n','').replaceAll('\n','<br>').replaceAll('[Lock]','')
 	let ytId = desc.match(/\[youtube id:(.*)\]/i)
 	
@@ -168,45 +142,44 @@ function displayMore(no)
 	}
 	data += '</div></div>'
 	data += desc
-    document.querySelector('#infopanel > div').innerHTML = data
+    document.querySelector('#infopanel > div:nth-of-type(2)').innerHTML = data
 	
 	// cleaning up the desc div
-	document.querySelector('#infopanel > div > div:nth-of-type(2)').removeAttribute('style')
-	document.querySelector('#infopanel > div > div:nth-of-type(2)').removeAttribute('class')
-	document.querySelector('#infopanel > div > div:nth-of-type(2)').nextSibling.remove()
+	document.querySelector('#infopanel > div:nth-of-type(2) > div:nth-of-type(2)').removeAttribute('style')
+	document.querySelector('#infopanel > div:nth-of-type(2) > div:nth-of-type(2)').removeAttribute('class')
+	document.querySelector('#infopanel > div:nth-of-type(2) > div:nth-of-type(2)').nextSibling.remove()
 	
 	// removing <br> as long as they are at the end of desc
-	let br = document.querySelector('#infopanel > div > div:nth-of-type(2)').lastChild
+	let br = document.querySelector('#infopanel > div:nth-of-type(2) > div:nth-of-type(2)').lastChild
 	while (br.tagName == 'BR')
 	{
 		br.remove()
-		br = document.querySelector('#infopanel > div > div:nth-of-type(2)').lastChild
+		br = document.querySelector('#infopanel > div:nth-of-type(2) > div:nth-of-type(2)').lastChild
 	}
 }
 
 //================================================
 
-function hideMore()
+function hideMore(event, force = false)
 {
 	//----------------------------------------------
 	// Hides the "More" tab 
 	// and erases all data from #more tag
 	//----------------------------------------------
 	
-	if (more != event.target) 
+	if (more == event.target || force) 
 	{
-		return
+		more.classList.add('hideTransition')
+        let data = document.querySelector('#infopanel > div:nth-of-type(2)')
+        data.innerHTML = ''
 	}
-	more.classList.toggle('hideTransition')
-	let data = document.querySelector('#infopanel > div')
-	data.innerHTML = ''
 }
 
 //================================================//
 // Main song browser and table generator modules
 //================================================//
 
-function downloadLevels(maxpg = 0)
+function downloadLevels()
 {
 	//----------------------------------------------
 	// Initiates loading animation,
@@ -216,15 +189,52 @@ function downloadLevels(maxpg = 0)
 	// and then passed to displayTable() function
 	//----------------------------------------------
 	
-	loading.classList.toggle('hideTransition')
+    loading.classList.remove('hideTransition')
+	
     searchMode = document.querySelector('#searchbox > select').value
-    levellist = eel.importPPD(kw.value,mode=searchMode,maxpages=maxpg)()
+    if(kw.value != '')
+    {
+        levellist = eel.importPPD(kw.value,mode=searchMode)()
+    }
+    else
+    {
+        levellist = eel.importPPD('',mode='start')()
+    }
 	//levellist = eel.importPPD(kw.value)()
 	levellist.then((result) => 
 	{
 		levellist = result
-		loading.classList.toggle('hideTransition')
+        if (kw.value != '')
+        {
+            document.querySelector('#tabpanel > div').innerText = levellist.length + ' results for "' + kw.value + '"'
+        }
+        else
+        {
+            document.querySelector('#tabpanel > div').innerText = 'Recently uploaded scores - ' + levellist.length + ' results'
+        }
+		loading.classList.add('hideTransition')
+        document.querySelector('#tabpanel > div').classList.remove('hideTransition')
 		console.log('levellist downloaded')
+
+		levellist = convertLl(levellist)
+		displayTable(levellist)
+	})
+}
+
+//================================================
+
+function downloadAllLevels()
+{
+    loading.classList.remove('hideTransition')
+    
+    levellist = eel.importPPD('',mode='all')()
+	levellist.then((result) => 
+	{
+		levellist = result
+        document.querySelector('#tabpanel > div').innerText = 'All scores - ' + levellist.length + ' results'
+		loading.classList.add('hideTransition')
+        document.querySelector('#tabpanel > div').classList.remove('hideTransition')
+		console.log('levellist downloaded (all)')
 
 		levellist = convertLl(levellist)
 		displayTable(levellist)
@@ -251,7 +261,7 @@ function convertLl(ll)
         l.bpm = Number(l.bpm)
         l.voted = Number(l.voted)
         
-        for (diff of ['Easy','Normal','Hard','Extreme'])
+        for (let diff of ['Easy','Normal','Hard','Extreme'])
         {
             if (l['s' + diff] > 1000)
             {
@@ -290,49 +300,48 @@ function applyDisplayOptions()
 	// and applies them by displayTable() function
 	//----------------------------------------------
 	
-	//let param1 = document.querySelector('#options_set > select').value
-	
-	//let param2
-	
-	//if (sortDirDesc.checked) {param2 = true}
-	//else {param2 = false}
-    
-    let param1 = sorting.sortBy
+	let param1 = sorting.sortBy
     let param2 = sorting.sortDesc
+	let param3 = convertToRomaji.checked
+	let param4 = displayLessDiff.checked
 	
-	let param3 = 15
-	let param4 = convertToRomaji.checked
-	let param5 = displayLessDiff.checked
-	
-	displayTable(levellist, sortBy = param1, sortDesc = param2, maxrows = param3, romaji = param4, less = param5)
+	displayTable(levellist, sortBy = param1, sortDesc = param2, romaji = param3, less = param4)
 }
 
 //================================================
 
-function displayTable(ll, sortBy = 'date', sortDesc = true, maxrows = 15, romaji = true, less = true, filterBy = false)
+function displayTable(ll, sortBy = 'date', sortDesc = true, romaji = true, less = true, filterBy = false)
 {
 	//----------------------------------------------
 	// Loads and applies sorting, filtering
 	// and displaying options
-	// (temp: cuts to maxrows number of songs)
 	// and passes the formatted for display list
 	// to generateTable() function
 	//----------------------------------------------
 	
+    /* doesnt work for some reason ??
+    loading.classList.remove('hideTransition')
+    console.log('should be loading')
+    */
+    
     ll = JSON.parse(ll)
     
 	displayFilters()
 	ll = filter(ll)
 	
 	ll = sortByKey(ll,'date')
-	ll = sortByKey(ll,sortBy)
+    if (sortBy == 'rating')
+    {
+        ll = sortByKey(ll,'voted')
+    }
+    if (sortBy != 'date')
+    {
+	   ll = sortByKey(ll,sortBy)
+    }
 	if (sortDesc) {ll.reverse()}
 	
-	//romaji = !romaji
-	//ll = ll.slice(0,maxrows)
-	
 	let no = 1
-	for (l of ll)
+	for (let l of ll)
 	{
         if (!romaji)
         {
@@ -350,7 +359,6 @@ function displayTable(ll, sortBy = 'date', sortDesc = true, maxrows = 15, romaji
 		
 		if (!isNaN(l.rating)) 
 		{
-			//l['rating'] = Number(l['rating']).toFixed(2)
 			l.rating += ' (' + l.voted + ')'
 		}
 		
@@ -373,15 +381,13 @@ function generateTable(ll, lessDiff)
     if (document.contains(document.querySelector('#resultstab')))
     {
         resultstab.remove()
+        tabpanel.querySelector('.footer-bar').remove()
     }
-
-    //let original_keys = ["id", "jpTitle", "title", "jpAuthor", "author", "csinput", "date", "downloads", "bpm", "rating", "voted", "duration", "pEasy", "pNormal", "pHard", "pExtreme", "sEasy", "sNormal", "sHard", "sExtreme", "desc"]
 	
 	let keys = ['no','title', 'author', 'date', 'csinput', 'downloads', 'rating', 'duration', 'sEasy', 'sNormal', 'sHard', 'sExtreme', 'i']
-    //additional hidden key 'more'
-	
+	//display keys
 	let dkeys = ['No.','Title', 'Author', 'Upload date', 'CSInput', 'Downloads', 'Rating', 'Duration', 'Difficulty', 'More']
-    
+    //sorting keys
     let skeys = ['no','title', 'author', 'date', 'csinput', 'downloads', 'rating', 'duration', 'sExtreme', 'i']
 	
     let table = document.createElement('table')
@@ -392,15 +398,6 @@ function generateTable(ll, lessDiff)
         let cell = document.createElement('th')
         let dkey = dkeys[n]
         let skey = skeys[n]
-        /*
-        if (['No.','More'].includes(key))
-        {
-            cell.innerText = key
-        }
-        else
-        {
-            cell.innerHTML = '<span class="sorting">' + key + '</span>'
-        }*/
         
         if (!['no','i'].includes(skey))
         {
@@ -444,7 +441,6 @@ function generateTable(ll, lessDiff)
             else if (key == 'author')
             {
                 let a = document.createElement('a')
-                //a.setAttribute('href','#')
                 a.setAttribute('href','https://projectdxxx.me/user/index/id/' + l.authorId)
                 a.innerText = l[key]
                 cell.appendChild(a)
@@ -455,7 +451,6 @@ function generateTable(ll, lessDiff)
                 {
                     continue
                 }
-                
                 
                 //if stars exist
                 if (l[key] != '')
@@ -479,7 +474,39 @@ function generateTable(ll, lessDiff)
             }
 			else if (key == 'i')
 			{
-				cell.innerText = 'ℹ️'
+                let buttons = '<div class="morebox-i" onclick="displayMore(' + l.levellistId + ')">ℹ️</div>'
+				buttons = '<div class="morebox morebox-i" onclick="displayMore(' + l.levellistId + ')">ℹ️</div>'
+                buttons += '<div class="morebox morebox-d'
+                
+                //switch(Math.floor(Math.random() * 5)) {
+                switch(Number(l.saved)) {
+                    case 0:
+                        buttons += '" title="Download"'
+                        break
+                    case 1:
+                        buttons += ' saved" title="Chart already downloaded"'
+                        break
+                    case 2:
+                        buttons += ' saved-nomv" title="Chart downloaded without movie"'
+                        break
+                    case 3:
+                        buttons += ' saved-mver" title="Chart downloaded, movie is unavailable"'
+                        break
+                    case 4:
+                        buttons += ' saved-mver" title="Chart downloaded, movie is private"'
+                        break
+                }
+                buttons += ' onclick="addToQueue(id=\'' + l.id + '\', video=\'' + l.video + '\', title=\''
+                if (convertToRomaji.checked)
+                {
+                    buttons += l.title.replaceAll('\'','\\\'')
+                }
+                else
+                {
+                    buttons += l.jpTitle.replaceAll('\'','\\\'')
+                }
+                buttons +='\', levellistId=\'' + l.levellistId + '\')">📥</div>'
+                cell.innerHTML = buttons
 				cell.setAttribute('levelno',levelno)
 				cell.setAttribute('levellistId',l.levellistId)
 			}
@@ -501,17 +528,10 @@ function generateTable(ll, lessDiff)
     table.appendChild(tbody)
     table.setAttribute('id','resultstab')
     tabpanel.appendChild(table)
-	
-	let infocells = document.querySelectorAll('.table-striped tr:not(:first-child) td:last-child')
-	for (cell of infocells)
-	{
-		cell.setAttribute('onclick','displayMore(' + cell.getAttribute('levellistId') + ')')
-	}
     
     let th
     skeys.forEach(function(skey,no)
     {
-        //document.querySelector('th:nth-of-type(' + (no + 1) + ')').setAttribute('class','sorting')
         if (skey == sorting.sortBy)
         {
             th = document.querySelector('th:nth-of-type(' + (no + 1) + ')')
@@ -526,6 +546,22 @@ function generateTable(ll, lessDiff)
     {
         th.classList.add('asc')
     }
+    
+    tabpanel.innerHTML += '<div class="footer-bar"></div>'
+    
+    /*
+    loading.classList.add('hideTransition')
+    console.log('not anymore')*/
+}
+
+//================================================
+
+function modifyLl(no, key, value)
+{
+    ll = JSON.parse(levellist)
+    ll[no][key] = value
+    levellist = JSON.stringify(ll)
+    //console.log(`${no} song key ${key} modified to value ${value}`)
 }
 
 //================================================//
@@ -650,8 +686,6 @@ function displayFilters()
 		
 		li.querySelector('select').value = f.key
 		li.querySelector('.filterValue').value = f.value
-		
-		
 		li.querySelector('select').addEventListener('change',displayFilters)
 		filterList.appendChild(li)
 	}
@@ -668,11 +702,11 @@ function filter(ll)
 	
 	let i = -1
 	let filtered = []
-	for (l of ll)
+	for (let l of ll)
 	{
 		i += 1
 		loop:
-		for (f of filters)
+		for (let f of filters)
 		{
 			switch (f.key)
 			{
@@ -748,27 +782,19 @@ function filter(ll)
 		}
 	}
 	filtered.reverse()
-	for (i of filtered)
+	for (let i of filtered)
 	{
 		ll.splice(i,1)
 	}
 	return ll
 }
 
-//================================================
+//================================================//
+// Other functions (idk how to categorize them)
+//================================================//
 
 function setSorting(sortBy)
 {
-    /*let keys = ['no',"title", "author", "date", "downloads", "csinput", "rating", "duration", "i"]
-    let th
-    keys.forEach(function(key,no)
-    {
-        document.querySelector('th:nth-of-type(' + (no + 1) + ')').setAttribute('class','sorting')
-        if (key == sortBy)
-        {
-            th = document.querySelector('th:nth-of-type(' + (no + 1) + ')')
-        }
-    })*/
     if (sortBy == sorting.sortBy)
     {
         sorting.sortDesc = !sorting.sortDesc
@@ -778,16 +804,93 @@ function setSorting(sortBy)
         sorting.sortBy = sortBy
         sorting.sortDesc = true
     }
-    /*
-    if (sorting.sortDesc)
+    
+    applyDisplayOptions()
+}
+
+//================================================
+
+function displayConfig()
+{
+    config.classList.remove('hideTransition')
+}
+
+//================================================
+
+function hideConfig(event, force = false)
+{
+    if (config == event.target || force) 
+	{
+		config.classList.add('hideTransition')
+	}
+}
+
+//================================================
+
+function savePath()
+{
+    if (path.value != '')
     {
-        th.classList.add('desc')
+        if (/^[A-Za-z]:\\/.test(path.value))
+        {
+            path.classList.remove('wrong-input')
+            path.classList.add('correct-input')
+            let backslash = '\\'
+            if (path.value.slice(-1) != backslash)
+            {
+                path.value += '\\'
+            }
+            eel.callPath(path.value)()
+        }
+        else
+        {
+            path.classList.remove('correct-input')
+            path.classList.add('wrong-input')
+        }
     }
     else
     {
-        th.classList.add('asc')
+        path.value = 'C:\\KHC\\PPD\\songs\\'
+        eel.callPath(path.value)()
     }
-    console.log(th.classList.value)*/
+}
+
+//================================================
+
+function addToQueue(id, video, title, levellistId)
+{
+    //temp - will be replaced by real queuing
+    let flag = eel.lvDl(song_id = id, vquality = Number(videoQuality), v_url = video, folder_title = title)()
     
-    applyDisplayOptions()
+    flag.then((result) => 
+	{
+        //still returns null
+        let value = result
+        //temp until flag works
+        //value = true
+        
+        /*
+        level dl flags:
+        0 - not dl
+        1 - full dl
+        1 - no movie
+        2 - movie unavailable
+        3 - movie private
+        */
+        modifyLl(levellistId, 'saved', value)
+        applyDisplayOptions()
+    })
+}
+
+//================================================
+
+function clearDb()
+{
+    let result = eel.db_local()()
+    result.then(() =>
+    {
+        hideConfig(event, force = true)
+        downloadAllLevels()
+    })
+    
 }

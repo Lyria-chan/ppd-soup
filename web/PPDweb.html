@@ -15,18 +15,53 @@
 			<span></span>
 			<span></span>
 		</div>
-        <div id="more" class='hideTransition'>
-			<div role='infopanel' id='infopanel'>
-                <ul class="nav nav-tabs" role="moreinfo" id="pageMore">
-                    <li role="presentation">
-                        <a href="#more" role="tab" data-toggle="tab">
-                            More
-                        </a>
-                    </li>
-                </ul>
+        <div id="more" class='hideTransition popup'>
+			<div id='infopanel' class='poppanel'>
+                <div class='title-bar'>
+                    More
+                </div>
 				<div></div>
+                <div class='footer-bar'></div>
             </div>
 		</div>
+        <div id="config" class='hideTransition popup'>
+			<div id='configpanel' class='poppanel'>
+                <div class='title-bar'>
+                    Configuration
+                </div>
+				<div>
+                    <div>
+                        PPD songs folder path for downloading:<br>
+                        <div class='connected-2'>
+                            <input id='path' type="text" placeholder='C:\KHC\PPD\songs'>
+                            <button id='savePathToFile'>Save</button><span id='pathError'></span>
+                        </div><br>
+                        Max video quality:<br>
+                        <div>
+                            <select id='selectedQuality'>
+                                <option value='0'>1080p</option>
+                                <option value='1' selected>720p</option>
+                                <option value='2'>480p</option>
+                                <option value='3'>360p</option>
+                                <option value='4'>240p</option>
+                                <option value='5'>144p</option>
+                            </select>
+                        </div><br>
+                        Clear and redownload local database<br><b>(loading can take a few minutes!)</b><br>
+                        <button id='clearLocalDatabase'><b>Clear</b></button>
+                    </div>
+                </div>
+                <div class='footer-bar'></div>
+            </div>
+		</div>
+        <!--<div class='rollpanel' id='rollLeft'>
+            <div>
+                <div id='console'></div>
+            </div>
+            <div id='showLeftRollpanel'>
+                <span>handle</span>
+            </div>
+        </div>-->
         <nav>
             <div class="container">
                 <div class="navbar-header">
@@ -42,45 +77,34 @@
 				<i>not even alpha <b>but almost working</b></i><br>
                 <i>update 09.01.2023: it is actually working</i><br>
                 <i>update 15.04.2023: but maybe still not perfectly working</i><br>
+                <i>update 12.05.2023: downloading does exist :000</i><br>
 			</div>
 			<br>
 			<div id='searchbox' class='connected-3'>
                 <select>
-                    <!--<option value='any'>Any (WIP)</option>-->
                     <option value='title'>Title</option>
                     <option value='author'>Author ID</option>
                 </select>
 				<input type='text' id="kw" placeholder='Search for anything...'>
-				<button id='search'>Search</button><br><br>
+				<button id='search'>Search</button>
+                <button id='viewAll'>View all</button>
+                <button id='openConfig'>Configuration</button><br><br>
 			</div>
 			
 			<div id='opt_div'>
 				<fieldset id='options_set'>
 					<legend>Display options</legend>
 
-					<!--<label>Sort:</label>
-					<input type='radio' name='sortDir' value='desc' id='sortDirDesc' checked>
-					<label for='desc'>descending</label>
-					<input type='radio' name='sortDir' value='asc' id='sortDirAsc'>
-					<label for='asc'>ascending</label>
-					<br>
-
-					<label>Sort by:</label>
-					<select>
-						<option value='date'>upload date</option>
-						<option value='title'>title</option>
-						<option value='author'>author</option>
-						<option value='downloads'>downloads</option>
-						<option value='csinput'>CSInput</option>
-						<option value='rating'>rating</option>
-						<option value='duration'>duration</option>
-					</select>
-					<br>-->
-
-					<label>Convert to romaji</label>
-					<input type='checkbox' id='convertToRomaji' checked><br>
-					<label>Display only Hard and Extreme difficulties</label>
-                    <input type='checkbox' id='displayLessDiff' checked>
+					<label class="switch">
+                        <input type="checkbox" id='convertToRomaji' checked>
+                        <span class="switch-slider"></span>
+                    </label>
+                    Convert to romaji<br>
+                    <label class="switch">
+                        <input type="checkbox" id='displayLessDiff' checked>
+                        <span class="switch-slider"></span>
+                    </label>
+                    Display only Hard and Extreme difficulties
 					<br><br>
 					
 				</fieldset>
@@ -88,51 +112,31 @@
 				<fieldset id='filters_set'>
 					<legend>Filters</legend>
 					
-					<div class='connected-2'>
+					<div class='connected-3'>
 						<button>Add</button>
 						<button>Clear all</button>
+                        <button id='apply'>Apply</button>
 					</div>
 					<br>
-					<ul id='filterList'>
-						<!--<li>
-							<label>Filter by</label>
-							<select>
-								<option value='title'>title</option>
-								<option value='author'>author</option>
-								<option value='date'>upload date</option>
-								<option value='csinput'>CSInput</option>
-								<option value='duration'>duration</option>
-							</select>
-							<select>
-								<option value='below'>below</option>
-								<option value='above'>above</option>
-							</select>
-							<label>containing</label>
-							<input class='filterValue'>
-						</li>-->
-						
-					</ul>
+					<ul id='filterList'></ul>
 				</fieldset>
 			</div>
 			
-			<button id='apply'>Apply</button>
-			<br><br>
+			<br>
             
             <div role='tabpanel' id='tabpanel'>
-                <ul class="nav nav-tabs" role="tablist" id="pageTab">
-                    <li role="presentation">
-                        <a href="#results" role="tab" data-toggle="tab">
-                            Results
-                        </a>
-                    </li>
-                </ul>
+                <div class='title-bar hideTransition'></div>
             </div>
         </div>
         <hr>
         <footer>
             <div class='container'>
                 <p class='text-center'>I like soup</p>
-                <p class='text-center'><a href='https://github.com/MishutkAviation/ppd-soup/'>GitHub</a></p>
+                <p class='text-center'>
+                    <a href='https://github.com/MishutkAviation/ppd-soup/'>GitHub</a>
+                    •
+                    <a href='https://projectdxxx.me/'>PPD</a>
+                </p>
             </div>
         </footer>
         
@@ -142,7 +146,25 @@
                 sortBy: 'date',
                 sortDesc: true
             }
+            var videoQuality
+            if (localStorage.getItem('videoQuality'))
+            {
+                videoQuality = localStorage.getItem('videoQuality')
+                selectedQuality.value = videoQuality
+            }
+            else
+            {
+                videoQuality = 1
+            }
+            var savedPath = eel.callPath()()
+            savedPath.then((result) => 
+            {
+                savedPath = result
+                path.value = savedPath
+            })
+            eel.db_local(mode='validate')
             search.addEventListener('click',downloadLevels)
+            viewAll.addEventListener('click',downloadAllLevels)
             kw.addEventListener('keypress',(event) => 
             {
                 if (event.key === 'Enter')
@@ -152,11 +174,37 @@
             })
 			apply.addEventListener('click',applyDisplayOptions)
             more.addEventListener('click',hideMore)
+            config.addEventListener('click',hideConfig)
 			document.querySelector('#filters_set button:nth-of-type(1)').addEventListener('click',addFilter)
 			document.querySelector('#filters_set button:nth-of-type(2)').addEventListener('click',clearFilters)
+            convertToRomaji.addEventListener('change',applyDisplayOptions)
+            displayLessDiff.addEventListener('change',applyDisplayOptions)
+            
+            openConfig.addEventListener('click',displayConfig)
+            savePathToFile.addEventListener('click',savePath)
+            
+            path.addEventListener('change',()=>
+            {
+                path.classList.remove('wrong-input')
+                path.classList.remove('correct-input')
+            })
+            
+            selectedQuality.addEventListener('change',()=>
+            {
+                videoQuality = selectedQuality.value
+                localStorage.setItem('videoQuality',videoQuality)
+            })
+            
+            clearLocalDatabase.addEventListener('click',clearDb)
+            
+            /* LEFT CONSOLE - TO DO
+            showLeftRollpanel.addEventListener('click',()=>{
+                rollLeft.classList.toggle('hidden')
+            })*/
 			
-            downloadLevels(maxpg = 2)
+            downloadLevels()
             //downloading on start restr to 2 pg
+            //not needed anymore
 			
             //debug
             //kw.value = 'bug'
@@ -505,16 +553,23 @@
 
 <!--
 todo list:
-downloading 
-filtering by difficulty
-description - author tags etc still display as [dfaoifi]
-scrolled description (but is it really needed?)
+
+(1)
 all interaction with python things, loading progress, downloading info and errors (js functions called by python)
-p a g e s  or maybe just loading more rows with scrolling
-menu panel rework (css)
-filters/options in separate window
+download queuing
+search engine - legacy or local.db (to do in python OR IN JS :| )
+
+(2)
+filtering by difficulty - slider
+filters in separate window
+panels left/right with console
+
+(3)
+description - author tags etc still display as [dfaoifi]
+light theme???????????
+
+(4)
+p a g e s  or maybe just loading more rows with scrolling?? doesnt make sense atm
 
 
-maybe in the future:
-panels left/right with console, errors, queuing etc
 -->

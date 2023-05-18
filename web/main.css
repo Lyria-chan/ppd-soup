@@ -13,6 +13,7 @@ nav {
 	right: 0;
 	min-height: 50px;
 	margin-bottom: 20px;
+    z-index: 200;
 }
 
 nav a {
@@ -29,6 +30,7 @@ nav a:hover {
 }
 
 button, input, select {
+    height: 30px;
 	background-color:#222;
 	color:#ccc;
 	padding: 4px 8px;
@@ -41,7 +43,6 @@ button, input, select {
 
 select {
 	padding: 4px;
-    height: 30px;
 	cursor: pointer;
 }
 
@@ -55,6 +56,14 @@ button:hover, select:hover {
 input:hover {
 	background-color: #282828;
     /*cursor:url(miku.png) 16 16,  pointer;*/
+}
+
+input.wrong-input {
+    border: 1px solid red;
+}
+
+input.correct-input {
+    border: 1px solid green;
 }
 
 button:active, input:focus, select:focus {
@@ -82,7 +91,14 @@ a:active, a:hover {
 
 a:hover, a:focus {
     color: #999;
-    text-decoration: underline;
+    text-decoration: none;
+}
+
+footer a {
+    color:#ccc;
+}
+footer {
+    color: #777;
 }
 
 th { 
@@ -180,8 +196,11 @@ div.connected-2 :nth-child(2), div.connected-3 :nth-child(2), div.connected-3 :n
 
 .table-striped > tbody > tr {
 	color:#ccc;
-    background-color:#111;
+    background-color:#181818;
 	transition: background-color ease-in-out 0.1s;
+    /* optional borders */
+    border-left: 1px solid #666;
+    border-right: 1px solid #666;
 }
 
 .table-striped > tbody > tr:hover {
@@ -201,11 +220,12 @@ div.connected-2 :nth-child(2), div.connected-3 :nth-child(2), div.connected-3 :n
 }
 
 .table-striped > tbody > tr > th {
-    text-align:center
+    text-align: center;
+    vertical-align: middle;
 }
 
-.table-striped tr:not(:first-child) td:last-child:hover {
-	cursor:pointer;
+.table-striped > tbody > tr > th:last-child {
+    min-width: 85px;
 }
 
 .table-striped > tbody > tr > td {
@@ -219,6 +239,78 @@ div.connected-2 :nth-child(2), div.connected-3 :nth-child(2), div.connected-3 :n
 .table-striped > tbody > tr > td.diff {
     border-right: 1px solid #666;
     border-left: 1px solid #666;
+    min-width: 40px;
+}
+
+div.morebox {
+    width: 2em;
+    border-radius: 4px;
+    display: inline-block;
+	cursor:pointer;
+	transition: box-shadow ease-in-out .1s,background-color ease-in-out .15s;
+}
+
+/* info and dl buttons */
+
+div.morebox-i {
+    background-color: #124068;
+    margin-right: 0.5em;
+}
+
+div.morebox-i:hover {
+    background-color: #175082;
+}
+
+div.morebox-i:active {
+    background-color: #1c609c;
+}
+
+div.morebox-d {
+    background-color: #186812;
+}
+
+div.morebox-d:hover {
+    background-color: #1e8217;
+}
+
+div.morebox-d:active {
+    background-color: #249c1c;
+}
+
+div.morebox-d.saved {
+    background-color: #3d3d3d;
+}
+
+div.morebox-d.saved:hover {
+    background-color: #4d4d4d;
+}
+
+div.morebox-d.saved:active {
+    background-color: #5c5c5c;
+}
+
+div.morebox-d.saved-nomv {
+    background-color: #8a5d0f;
+}
+
+div.morebox-d.saved-nomv:hover {
+    background-color: #a56f12;
+}
+
+div.morebox-d.saved-nomv:active {
+    background-color: #c18215;
+}
+
+div.morebox-d.saved-mver {
+    background-color: #871d1d;
+}
+
+div.morebox-d.saved-mver:hover {
+    background-color: #a02222;
+}
+
+div.morebox-d.saved-mver:active {
+    background-color: #b92727;
 }
 
 #loading {
@@ -248,16 +340,16 @@ div.connected-2 :nth-child(2), div.connected-3 :nth-child(2), div.connected-3 :n
 	animation: loading 0.5s ease 0s infinite alternate;
 }
 
-#loading.hideTransition {
+.hideTransition {
 	opacity: 0;
-	visibility: hidden;
+	visibility: hidden !important;
 	transition: opacity 0.2s, visibility 0.2s;
 }
 
 #loading > span:nth-of-type(2) {animation-delay: 0.125s;}
 #loading > span:nth-of-type(3) {animation-delay: 0.25s;}
 
-#more {
+.popup {
 	background-color:rgba(0,0,0,0.5);
 	position: fixed;
     top: 0;
@@ -273,62 +365,124 @@ div.connected-2 :nth-child(2), div.connected-3 :nth-child(2), div.connected-3 :n
 	transition: opacity 0.2s, visibility 0.2s;
 }
 
-#more.hideTransition {
+/* left console - wip
+.rollpanel {
+    height: 100vh;
+    width: 500px;
+    position: absolute;
+    left: 0;
+    transition: left 0.5s ease-in-out;
+    display: flex;
+    flex-direction: row;
+}
+
+.rollpanel > div:nth-of-type(1) {
+    height: 100%;
+    width: 440px;
+    background-color: #222;
+}
+
+.rollpanel > div:nth-of-type(2) > span {
+    color: white;
+    padding: 1em;
+    writing-mode: vertical-lr;
+    border: 5px solid #222;
+    border-radius: 0 1em 1em 0;
+    position: relative;
+    top: 2em;
+}
+
+#rollLeft.hidden {
+    position: absolute;
+    left: -200px;
+}
+
+#console {
+    font-family: monospace;
+    background-color: #000;
+    margin: 1em;
+    width: fit-content;
+    height: fit-content;
+}*/
+
+.popup.hideTransition {
 	opacity: 0;
 	visibility: hidden;
 	transition: opacity 0.2s, visibility 0.2s;
 }
 
-#infopanel {
+.poppanel {
+    max-width: 620px;
 	color:#ccc;
 	width:70%;
 }
 
-#infopanel > ul {
-	background-color:transparent
-}
-
-#infopanel > div {
+.poppanel > div:nth-of-type(2) {
 	background-color:#222;
 	height:auto;
-    border-bottom: 1px solid #ddd;
+    /* optional borders */
+    border-left: 1px solid #666;
+    border-right: 1px solid #666;
+}
+
+.poppanel > div:nth-of-type(2) > div:nth-of-type(1) {
+    border-top: 1px solid #ddd;
+}
+
+.poppanel > div:nth-of-type(2) > div:nth-of-type(2) {
+	padding: 1em;
+	border-top: 1px solid #ddd;
 }
 
 
-#infopanel > div > div:nth-of-type(1) {
-	display: flex;
-}
-
-#infopanel > div > div > div {
+#infopanel > div:nth-of-type(2) > div > div {
 	padding: 1em;
 }
 
-#infopanel > div > div > div:nth-of-type(1) {
+#infopanel > div:nth-of-type(2) > div:nth-of-type(2) {
+	padding: 1em;
+    overflow: auto;
+    max-height: 50vh;
+    background-color:#1c1c1c;
+}
+
+#infopanel > div:nth-of-type(2) > div:nth-of-type(1) {
+	display: flex;
+    background-color:#222;
+}
+
+#infopanel > div:nth-of-type(2) > div > div:nth-of-type(1) {
 	width: 60%;
 }
 
-#infopanel > div > div > div:nth-of-type(2) {
+#infopanel > div:nth-of-type(2) > div > div:nth-of-type(2) {
 	width: 40%;
 }
 
-#infopanel > div > div:nth-of-type(2) {
-	padding: 1em;
-	border-top: 1px solid #ddd;
-    background-color:#111;
-}
-
-#infopanel > div > a > img {
+#infopanel > div:nth-of-type(2) > a > img {
 	width: 16px;
 	height: 16px;
 	vertical-align: -20%;
 }
 
-#infopanel > div > div > div:nth-of-type(2) > span, td span {
+#infopanel > div:nth-of-type(2) > div > div:nth-of-type(2) > span, td span {
     color: #fff;
 }
 
-#infopanel > div > div > div:nth-of-type(2) > span.approx, td span.approx {
+#infopanel > div:nth-of-type(2) > div > div:nth-of-type(2) > span.approx, td span.approx {
     color: #f0cf29;
+}
+
+#configpanel {
+    width: 330px;
+}
+
+#configpanel > div:nth-of-type(2) > div {
+    padding: 1em;
+}
+
+#configpanel > div:nth-of-type(2) > div {
+    padding: 1em;
 }
 
 th > span {
@@ -348,27 +502,181 @@ th > span {
 	cursor: pointer;
 }
 
+.table {
+    margin: 0;
+}
+
 #opt_div {
 	display:flex;
 }
 
 #opt_div > fieldset {
-	width:50%;
 	color:#999;
+}
+
+#opt_div > fieldset:nth-of-type(1)
+{
+    width:350px;
+}
+
+#opt_div > fieldset:nth-of-type(2)
+{
+    flex-grow: 1;
 }
 
 .container>.navbar-header {
     margin-left: 0px;
 }
 
+div.title-bar {
+    background-color: #181818;
+    font-size: 16px;
+    border-radius: 16px 16px 0px 0px;
+    padding: 8px;
+    color: #aaa;
+    text-align: center;
+    /* optional borders */
+    border-left: 1px solid #666;
+    border-right: 1px solid #666;
+    border-top:  1px solid #666;
+}
+
+div.footer-bar {
+    background-color: #181818;
+    min-height: 24px;
+    font-size: 16px;
+    border-radius: 0px 0px 16px 16px;
+    border-top: 1px solid #ddd;
+    padding: 8px;
+    color: #aaa;
+    text-align: center;
+    /* optional borders */
+    border-left: 1px solid #666;
+    border-right: 1px solid #666;
+    border-bottom:  1px solid #666;
+}
+
 th:nth-of-type(6),th:nth-of-type(7),th:nth-of-type(8),tr > td:nth-of-type(6),tr > td:nth-of-type(7),tr > td:nth-of-type(8) {display:none}
+
+/* toggle */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 30px;
+    height: 17px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* The slider */
+.switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #111;
+    transition: .4s;
+    border: 1px solid #666;
+    border-radius: 17px;
+}
+
+.switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 13px;
+    width: 13px;
+    left: 1px;
+    bottom: 1px;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .switch-slider {
+    background-color: #333;
+}
+
+input:focus + .switch-slider {
+    box-shadow: rgba(0, 0, 0, 0) 0px 1px 1px inset, rgba(170, 170, 170, 0.6) 0px 0px 4px;
+}
+
+input:checked + .switch-slider:before {
+    transform: translateX(13px);
+}
 
 @media only screen and (min-width: 992px) {
     th:nth-of-type(6),th:nth-of-type(7),th:nth-of-type(8),tr > td:nth-of-type(6),tr > td:nth-of-type(7),tr > td:nth-of-type(8) {display:table-cell}
+}
+
+div.container {
+    width: 98%;
+}
+
+@media only screen and (min-width: 1200px) {
+    div.container {
+        width: 1170px;
+    }
+}
+
+@media only screen and (max-width: 710px) {
+    div.container {
+        width: 700px;
+    }
+    body {
+        width: 700px;
+    }
+}
+
+@media only screen and (max-width: 1200px) {
+    tr > td:nth-of-type(2), tr > td:nth-of-type(3) {
+        word-break: break-all;
+    }
 }
 
 @keyframes loading {
 	0% {opacity: 1.0}
 	30% {opacity: 1.0}
 	100% {opacity: 0.2}
+}
+
+/*scrollbar*/
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    cursor: pointer;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background-color: #222;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #282828;
+    border: 1px solid #666;
+    border-radius: 4px;
+    transition: border-color ease-in-out .15s,box-shadow ease-in-out .1s,background ease-in-out .15s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #333;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: #444;
+    border-color: #aaa;
+    box-shadow: rgba(0, 0, 0, 0) 0px 1px 1px inset, rgba(170, 170, 170, 0.6) 0px 0px 8px;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: #222;
 }
