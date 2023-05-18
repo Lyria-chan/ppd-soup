@@ -1,8 +1,8 @@
-import concurrent.futures, requests, time, re, sqlite3, json
+import concurrent.futures, requests, time, re, sqlite3, urllib.parse, os
 from bs4 import BeautifulSoup
 import dllPPD as dll
-parsedinfo = []
-dl_death_flag = False
+
+keys = ["video", "id", "saved", "jpTitle", "title", "authorId", "jpAuthor", "author", "csinput", "date", "downloads", "bpm", "rating", "voted", "duration", "pEasy", "pNormal", "pHard", "pExtreme", "sEasy", "sNormal", "sHard", "sExtreme", "desc"]
 
 def set_dl_death_flag(state):
     global dl_death_flag
@@ -12,6 +12,7 @@ def set_dl_death_flag(state):
 def get_and_parse(session, page, kw, mode):
     # get the latest gossip from the search results page by sending a GET request
     # 
+    kw = urllib.parse.quote(kw, safe='')
     if mode == 'all':
         score_kw_url = f'https://projectdxxx.me/score-library/index/page/{page}'
     elif mode == 'author':
@@ -28,24 +29,36 @@ def get_and_parse(session, page, kw, mode):
     return levels
 
 
-def handle(kw, mode = 'def', maxpages = 0):
+def handle(kw = '', mode = 'def'):
+    start_time = time.perf_counter()
     global parsedinfo
+    global downloaded
+    global dl_death_flag
     parsedinfo = []
-    #parsedinfo = db_local('load')
-    if mode == 'all': kw = ''
+    downloaded = 0
+    dl_death_flag = False
+    limitentries = ''
+    if mode == 'start': 
+        limitentries = 30
+        mode = 'all'
+    
+    saved = dll.refreshIdDatabase(dll.callPath())
+    
     if kw == '': mode = 'all'
+    if mode == 'all':
+        parsedinfo = db_local('load', saved)
+        kw = ''
         
     # start a session and get ready to slurp up some soup
     with requests.Session() as session:
         data_dl_page = 1
         
-        saved = dll.refreshIdDatabase(dll.callPath())
+        
         
         # keep downloading and parsing pages until we reach a page with less than 10 results or we've reached our daily soup quota
-        start_time = time.perf_counter()
         while not dl_death_flag:
             # download and parse the current page
-            print(f"Slurping up page {data_dl_page}...", end='')
+            dll.ppr(f"Slurping up page {data_dl_page}...")
 
             # submit the task to the soup chef (thread pool executor) and get a Future object
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -57,36 +70,41 @@ def handle(kw, mode = 'def', maxpages = 0):
             # there are twelve entries in the site when you use kw='', so we remove the last two unnecessary ones
             if kw == '':
                 del levels[-1:-3:-1]
+                if data_dl_page == 1:
+                    if '広告された譜面' in levels[-1].find('h3', class_='panel-title').get_text().strip(): del levels[-1]
                 
             data_dl_page += 1
-            print(f'\rPage {data_dl_page-1} slurped up!   ')
+            dll.ppr(f'Page {data_dl_page-1} slurped up!')
             # TEN PAMIETNY BREAK
             # break
         
             # asynchronously call save_to_array using a separate thread pool executor
-            with concurrent.futures.ThreadPoolExecutor() as save_executor:
-                save_future = save_executor.submit(save_to_array, levels, saved)
+            # with concurrent.futures.ThreadPoolExecutor() as save_executor:
+            #    save_future = save_executor.submit(save_to_array, levels, saved, mode)
+            save_to_array(levels, saved, mode)
             
             # if there are less than 10 levels to add, there are no more pages to be downloaded (the soup pot is empty)
-            if data_dl_page-1 == maxpages or len(levels) != 10:
+            if len(levels) != 10:
                 break
             
         elapsed_time = time.perf_counter() - start_time
-        print(f"Elapsed time: {elapsed_time:0.2f} seconds")
-    save_future.result()
+        dll.ppr(f"Elapsed time: {elapsed_time:0.2f} seconds")
+        # save_future.result()
+    
+    if mode == 'all':
+        dll.ppr(f'{downloaded} new entries added, {len(parsedinfo)} in total.')
     
     
-    
-    return parsedinfo
+    if limitentries: return parsedinfo[:limitentries]
+    else: return parsedinfo
     
 
-def save_to_array(ll, saved = ''):
+def save_to_array(ll, saved = '', mode = 'def', maxpages = 0):
     global parsedinfo
     global dl_death_flag
+    global keys
+    global li
     for lv in ll:
-        
-        keys = ["video", "id", "saved", "jpTitle", "title", "authorId", "jpAuthor", "author", "csinput", "date", "downloads", "bpm", "rating", "voted", "duration", "pEasy", "pNormal", "pHard", "pExtreme", "sEasy", "sNormal", "sHard", "sExtreme", "desc"]
-        global li
         li = []
         lv_text = lv.get_text()
         
@@ -95,8 +113,14 @@ def save_to_array(ll, saved = ''):
         li.append(lv.find("input", class_="form-control hidden").get('value'))
         
         li.append(lv.find('a').get('href').split("/")[-1])
-        if li[-1] in saved: li.append(True)
-        else: li.append(False)
+        flag = False
+        for item in saved:
+            if li[-1] in item.split('x')[-1]:
+                flag = item.split('x')[0]
+        if flag:
+            li.append(flag)
+        else: 
+            li.append('0')
         li.append(lv.find('a').get('title'))
         li.append(dll.translateAndCapitalize(li[-1]))
         
@@ -149,8 +173,11 @@ def save_to_array(ll, saved = ''):
         
         # combining all the soup ingredients into a single serving
         #data = 
-        # db_local('save', data)
-        parsedinfo.append(data)
+        if mode == 'all':
+            if db_local('save', data):
+                parsedinfo.append(data)
+            pass
+        else: parsedinfo.append(data)
         if len(data) != 24: dl_death_flag = True
 
 def scrape_stars_n_desc(lv, li):
@@ -190,13 +217,15 @@ def scrape_stars_n_desc(lv, li):
                                                     index = desc[aindex:].lower().find(tempkw)
                                                     if index != -1:  
                                                         index += aindex
-                                                        toappend = dll.extractFloat(desc[index+len(tempkw) : index+len(tempkw) + 20])
+                                                        toappend = dll.extractFloat(desc[index+len(tempkw) : index+len(tempkw)])
                                                         if toappend:
                                                             li.append(toappend)
                                                             flag = False
                                                             break
                                                         elif toappend == None:
                                                             aindex = index + len(tempkw) 
+                                                        else: 
+                                                            break
                                                     else:
                                                         break
                                             
@@ -227,14 +256,15 @@ def scrape_stars_n_desc(lv, li):
                                                     index = desc[aindex:].lower().find(tempkw)
                                                     if index != -1:  
                                                         index += aindex
-                                                        toappend = dll.extractFloat(desc[index+len(tempkw) : index+len(tempkw) + 20])
+                                                        toappend = dll.extractFloat(desc[index+len(tempkw) : index+len(tempkw) + 10])
                                                         if toappend:
                                                             li[-j-1] = toappend
                                                             flag = False
                                                             break
                                                         elif toappend == None:
-                                                            #if 
                                                             aindex = index + len(tempkw) 
+                                                        else:
+                                                            break
                                                     else:
                                                         break
         # lumi2 is the bane of my existence when it comes to marking hard levels help me
@@ -273,12 +303,24 @@ def scrape_stars_n_desc(lv, li):
         li.append(desc_html.prettify(formatter="html"))
     
 def db_local(mode, data = ''):
+    if mode == 'delete':
+        try:
+            os.remove(r'assets\local.db')
+        except Exception as e:
+            print(e)
+            dll.ppr(r"This file already doesn't exist, proceeding...")
+        
+        
+    global downloaded
     conn = sqlite3.connect(r'assets\local.db')
     c = conn.cursor()
+        
     if mode == 'load':
-        #columns = ', '.join(data.keys())
-        #c.execute(f'CREATE TABLE IF NOT EXISTS your_table ({columns})')
-        c.execute('SELECT * FROM scores')
+        global keys
+        keys[1] = 'id PRIMARY KEY'
+        c.execute(f'CREATE TABLE IF NOT EXISTS scores ({", ".join(keys)})')
+        keys[1] = 'id'
+        c.execute('SELECT * FROM scores ORDER BY date DESC')
         rows = c.fetchall()
         column_names = [description[0] for description in c.description]
         levelslist = []
@@ -286,38 +328,57 @@ def db_local(mode, data = ''):
             entry = {}
             for i, value in enumerate(row):
                 entry[column_names[i]] = value
-                if column_names[i] == 'csinput' or column_names[i] == 'saved':
+                if column_names[i] == 'csinput':
                     if value == 1: value = True
                     elif value == 0: value = False 
                 entry[column_names[i]] = value
             levelslist.append(entry)
-        
         return(levelslist)
+    
     elif mode == 'save':
-        rows_len = len(c.fetchall())
+        c.execute("SELECT COUNT(id) FROM scores")
+        rows_len = c.fetchone()[0]
         values = ', '.join('?' * len(data))
         data_values = tuple(data.values())
         c.execute(f'INSERT OR IGNORE INTO scores VALUES ({values})', data_values)
         conn.commit()
-        if rows_len == len(c.fetchall()): 
+        c.execute("SELECT COUNT(id) FROM scores")
+        
+        if rows_len == c.fetchone()[0]: 
             set_dl_death_flag(True)
-        #c.execute()
+            result = False
+        else:
+            downloaded += 1
+            result = True
+    
+    elif mode == 'validate':
+        c.execute("SELECT EXISTS(SELECT 1 FROM scores WHERE id = 'cf3a9cb7baecea6620af0b6b37a271d3')")
+        if not c.fetchone()[0]:
+            dll.ppr('WARNING: YOUR DATABASE MIGHT NOT BE COMPLETE. WIPE AND REDOWNLOAD IT AT CONFIGURATION')
+
+    elif mode == 'update':
+        pass
+    
     conn.close()
+    try:
+        return result
+    except:
+        pass
     
     
 # run the soup kitchen
 # handle(input('Search for score: '))
-#handle('bluestar', 'author', maxpages = 20)
-#handle('machinegun', maxpages = 1)
-handle('Heaven feat. Hatsune Miku (ATOLS Remix)')
-#handle('kac2013')
+#handle('紅蓮華 ver.萌愛')# , 'all')
+#handle('')
+#handle('psi')
 """
 todo:
-   
-- downloading data and loading from that (json/sqlite files?)
+
+
+- rework save to include better checking for broken database
+
 
 not mine: YES ITS MINEEE 
     O W N
 - graphic interface
-
 """

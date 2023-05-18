@@ -1,13 +1,13 @@
 easy
 ea:
 # --- # --- # --- #
-normal
 no:
+normal
 nomal
 # --- # --- # --- #
+ha:
 hard
 ＨＡＲＤ
-ha:
 # --- # --- # --- #
 extreme
 ACFT風

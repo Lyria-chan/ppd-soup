@@ -10,8 +10,8 @@ eel.init('web', allowed_extensions=['.js', '.html'])
 
 try:
     @eel.expose            # Expose this function to Javascript
-    def importPPD(kw = '', mode = 'def', maxpages = 0):
-        result = PPDLD.handle(kw, mode, maxpages)
+    def importPPD(kw = '', mode = 'def'):
+        result = PPDLD.handle(kw, mode)
         return result
     @eel.expose
     def set_death_flag(state):
@@ -20,11 +20,19 @@ try:
     def callPath(path = '', mode = 'zmien moda'):
         result = dll.callPath(path, mode = 'js')
         return result
+    @eel.expose
+    def lvDl(song_id, vquality = 1, v_url = None, folder_title = None, folder_path = callPath(), iskakasi = 'False'):
+        result = dll.LvDl(song_id, folder_path, iskakasi, vquality, v_url, folder_title)
+        return result
+    @eel.expose
+    def db_local(mode = 'delete', data = ''):
+        PPDLD.db_local(mode, data)
+        return
 except: 
     pass
 
 try:
-    eel.start('PPDweb.html', shutdown_delay=10.0)
+    eel.start('PPDweb.html', shutdown_delay=8.0)
 except OSError:
-    eel.start('PPDweb.html', shutdown_delay=10.0, mode='edge')
+    eel.start('PPDweb.html', shutdown_delay=8.0, mode='edge')
 # Start (this blocks and enters loop)

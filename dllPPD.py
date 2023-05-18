@@ -1,9 +1,15 @@
-import requests, zipfile, os, re, pykakasi, json, shutil #, sqlite3
+import requests, zipfile, os, re, pykakasi, json, shutil, eel #, sqlite3
 from niconico_dl import NicoNicoVideo
 from pytube import YouTube
 from bs4 import BeautifulSoup
 
-
+session = requests.Session()
+def ppr(str):
+    try:
+        eel.jsPrint(str)
+    except:
+        pass
+    print(str)
 
 # Set up the pykakasi converter
 kks = pykakasi.Kakasi()
@@ -27,8 +33,14 @@ def callPath(path = '', mode = 'python'):
                 else: break
 
     return path
-            
-def LvDl(session, song_id, folder_path = callPath(), iskakasi = 'True', vquality = 1, v_url = None, folder_title = None):
+
+# def massLvDl(song_ids, folder_path = callPath(), iskakasi = 'True', vquality = 1, v_url = None, folder_title = None):
+    
+        
+
+
+def LvDl(song_id, folder_path = callPath(), iskakasi = 'True', vquality = 1, v_url = None, folder_title = None):
+    global session
     for root, dirs, files in os.walk(folder_path):
         for dirname in dirs:
             file_path = os.path.join(folder_path, dirname, "limk.txt")
@@ -49,11 +61,11 @@ def LvDl(session, song_id, folder_path = callPath(), iskakasi = 'True', vquality
                                     break
                                 except PermissionError:
                                     input("A file you're trying to access is in use, close it and press enter to continue...")
-                            print("Missing video found, redownloading...")
+                            ppr("Missing video found, redownloading...")
                         else:
-                            print("Chart is already downloaded!")
+                            ppr("Chart is already downloaded!")
                             file.close()
-                            return
+                            return '1'
             except FileNotFoundError:
                 pass
 
@@ -73,27 +85,32 @@ def LvDl(session, song_id, folder_path = callPath(), iskakasi = 'True', vquality
     # now youtube magic, can return the cause other than "NO MOVIE", after first try download from niconico is attempted
     # if that doesn't work, the level gets marked as [NO MOVIE]
     try:
-        yt_error_check = ytDl(session, v_url, folder_path, folder_title)
+        yt_error_check = ytDl(session, v_url, folder_path, folder_title, vquality)
         if yt_error_check:
             if yt_error_check == "VideoPrivate":
-                flag = 'PRIVATED'
+                flag = 'PRIVATE'
+                xflag = '4'
             if yt_error_check == "VideoUnavailable":
                 flag = 'UNAVAILABLE'
-            print(f"VIDEO IS {flag}: {v_url}")
+                xflag = '3'
+            ppr(f"VIDEO IS {flag}: {v_url}")
             try:
                 os.rmdir(os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
             except: 
                 pass
             os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
-            return
-    except:
+            return xflag
+        else: xflag = '1'
+    except: # Exception as e:
         if 'nicovideo.jp/watch/' in v_url:
             nicoDl(session, v_url, folder_path, folder_title)
+            xflag = '1'
         else:
-            print(f"MISSING VIDEO: {v_url}")
+            ppr(f"MISSING VIDEO: {v_url}")
             os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[NO MOVIE] {folder_title}'))
-            return
-    print('Chart downloaded, proceeding...                                     ', end='')
+            return '2'
+    ppr('Chart downloaded, proceeding...')
+    return xflag
 # =============================\================================================
 # =============================\================================================
             
@@ -121,38 +138,37 @@ def zipDl(session, url, folder_path, folder_title, iskakasi):
         alt_folder_title = zip_ref.namelist()[0].split("/",1)[0]
         zip_ref.close()
     os.remove(os.path.join(folder_path, 'folder.zip'))
-    
-    corrupted = "╖δα╡σ±┼ªéîàÄⁿ¬ëÅ╣"
+    corrupted = "╖δα╡σ±┼ªéîàÄⁿ¬ëÅ╣âô"
     if any(char in alt_folder_title for char in corrupted):
         if iskakasi:
             folder_title = translateAndCapitalize(folder_title)
     else:
         if iskakasi:
             folder_title = translateAndCapitalize(alt_folder_title)
-            
     os.rename(os.path.join(folder_path, alt_folder_title), os.path.join(folder_path, folder_title))
     return folder_title
         
 
 def nicoDl(session, url, folder_path, folder_title):
     # download for videos on niconico, takes longer than from yt
-    print('\rZip downloaded, proceeding to niconico download...',end='')
+    ppr('Zip downloaded, proceeding to niconico download...')
     with NicoNicoVideo(url, log=True) as nico:
         data = nico.get_info()
         nico.download(os.path.join(folder_path, folder_title, data["video"]["title"] + "movie.mp4"))
+    
 
 def ytDl(session, url, folder_path, folder_title, vquality = 1):
     # download for videos on youtube, most videos use this
-    print('\rZip downloaded, proceeding to youtube download...',end='')
+    ppr('Zip downloaded, proceeding to youtube download...')
     if 'youtu.be/' in url:
         url = 'https://www.youtube.com/watch?v=' + url.split("/")[-1]
     yt = YouTube(url)
     if 'This video is private' in yt.embed_html:
-        # perform any necessary actions here
         return "VideoPrivate"
-    # print(yt.embed_html)
+    # ppr(yt.embed_html)
     elif 'This video is unavailable'in yt.embed_html:
         return "VideoUnavailable"
+    print('check')
     quals = [1080, 720, 480, 360, 240, 144]
     for num in range(vquality, 6):
         video = yt.streams.filter(mime_type= "video/mp4", res = f'{quals[num]}p').first()
@@ -160,7 +176,7 @@ def ytDl(session, url, folder_path, folder_title, vquality = 1):
             video.download(os.path.join(folder_path, folder_title))
             break
         if video == None and num == 5:
-            print('cos poszlo nie tak. ups')
+            ppr('cos poszlo nie tak. ups')
     return None
                     
 
@@ -245,12 +261,15 @@ def extractFloat(string):
     # If no float is found, return None
     return None
 
-def refreshIdDatabase(path, save = True):
+def refreshIdDatabase(path = callPath()):
     # gives the list of level IDs
     IDS = []
+    pcheck = [i for i in path.split("\\") if i]
+    if 'songs' in pcheck and not pcheck[-1] in 'songs':
+        path = path[: path.index('songs\\') + 6]
     for root, dirs, files in os.walk(path, topdown=False):
         for name in dirs:
-            if not name == "sound" and not '[NO MOVIE]' in name:
+            if not name == "sound" in name:
                 try:
                     open(os.path.join(root,name,'data.ini'), 'r')
                     try:
@@ -258,15 +277,22 @@ def refreshIdDatabase(path, save = True):
                             limk = limk.read()
                             if '/' in limk:
                                 limk = limk.split('/')[-1]
+                            if '[NO MOVIE]' in name: limk = '2x' + limk
+                            elif '[UNAVAILABLE MOVIE]' in name: limk = '3x' + limk
+                            elif '[PRIVATED MOVIE]' in name: limk = '4x' + limk
+                            else: 
+                                limk = '1x' + limk
+                            
                             if limk == '':
-                                print(f"Empty limk found in {name}, continuing...")
+                                ppr(f"Empty limk found in {name}, continuing...")
                                 break
+                            
                             IDS.append(limk)
                             
                     except FileNotFoundError:
-                        # print(f'Limk missing in {name}, continuing...')
+                        # ppr(f'Limk missing in {name}, continuing...')
                         continue
-                    except Exception as e: print(e)
+                    except Exception as e: ppr(e)
                 except FileNotFoundError:
                     continue
     
@@ -289,23 +315,23 @@ def readJson(fname, type):
     return obj
     
 
-        
-#with requests.session() as session:
-#    LvDl(session, '60039ea4023f87de230931f72a8859b2', r'C:\KHC\PPD\songs\testing\', True)
+#LvDl(song_id = 'eedc939f6e667630e490288fcd1b436f', vquality = 1)
 
-#with requests.Session() as session:
-#     ytDl(session, 'https://youtu.be/e0VtkZYtzrI', r'C:\KHC\PPD\songs\testing', 'TEST', 1)
+
+#ytDl(session, 'https://youtu.be/e-PlytQYPt8', r'C:\KHC\PPD\songs\testing', 'TEST', 1)
 
 #with requests.Session() as session:
 #     nicoDl(session, 'https://www.nicovideo.jp/watch/sm12107146', r'C:\KHC\PPD\songs\testing', 'TEST')
 
 #test = refreshIdDatabase(r'C:\KHC\PPD\songs')
 
+#print(refreshIdDatabase())
+
 """
 to do:
-    
-- default path for save (?)
-- sqlite save for the parsed data if keyword is ''
+
+exception for no zip
+downloading from onedrive???
 
 for later:
     
