@@ -42,13 +42,21 @@ def handle(kw = '', mode = 'def'):
         limitentries = 30
         mode = 'all'
     
+    
+    
     saved = dll.refreshIdDatabase(dll.callPath())
     
+    
+    
+    db_local('update', saved)
     if kw == '': mode = 'all'
     if mode == 'all':
         parsedinfo = db_local('load', saved)
         kw = ''
-        
+    
+    elapsed_time = time.perf_counter() - start_time
+    dll.ppr(f"Elapsed time so far: {elapsed_time:0.2f} seconds")
+
     # start a session and get ready to slurp up some soup
     with requests.Session() as session:
         data_dl_page = 1
@@ -88,11 +96,13 @@ def handle(kw = '', mode = 'def'):
                 break
             
         elapsed_time = time.perf_counter() - start_time
-        dll.ppr(f"Elapsed time: {elapsed_time:0.2f} seconds")
+        dll.ppr(f"Total elapsed time: {elapsed_time:0.2f} seconds")
         # save_future.result()
     
     if mode == 'all':
         dll.ppr(f'{downloaded} new entries added, {len(parsedinfo)} in total.')
+        if downloaded and not downloaded == len(parsedinfo):
+            dll.ppr("WARNING: IF NEW ENTRIES DON'T SHOW UP REFRESH USING F5")
     
     
     if limitentries: return parsedinfo[:limitentries]
@@ -159,17 +169,6 @@ def save_to_array(ll, saved = '', mode = 'def', maxpages = 0):
         scrape_stars_n_desc(lv, li)
         data = {**dict(zip(keys, li))}
         
-# =============================================================================
-#         # HERE STARTS SQL STUFF
-#         if True:
-#             con = sqlite3.connect("tutorial.db")
-#             cur = con.cursor()
-#
-#             columns = ', '.join(data.keys())
-#             values = ', '.join(['%s'] * len(data))
-#             
-#             cur.execute(f"INSERT INTO YourTableName ({columns}) VALUES ({values})")
-# =============================================================================
         
         # combining all the soup ingredients into a single serving
         #data = 
@@ -206,28 +205,28 @@ def scrape_stars_n_desc(lv, li):
                 for kwdiff in kws[i]:
                     if flag:
                         for kwmid in kws[-2]:
-                                if flag:
-                                    for kwstar in kws[-1]:
-                                        if flag:
-                                            tempkw = (kwdiff+kwmid+kwstar).lower()
-                                            index = desc.lower().find(tempkw)
-                                            if index != -1:      
-                                                aindex = 0 # additional index
-                                                while True:
-                                                    index = desc[aindex:].lower().find(tempkw)
-                                                    if index != -1:  
-                                                        index += aindex
-                                                        toappend = dll.extractFloat(desc[index+len(tempkw) : index+len(tempkw)])
-                                                        if toappend:
-                                                            li.append(toappend)
-                                                            flag = False
-                                                            break
-                                                        elif toappend == None:
-                                                            aindex = index + len(tempkw) 
-                                                        else: 
-                                                            break
-                                                    else:
+                            if flag:
+                                for kwstar in kws[-1]:
+                                    if flag:
+                                        tempkw = (kwdiff+kwmid+kwstar).lower()
+                                        index = desc.lower().find(tempkw)
+                                        if index != -1:      
+                                            aindex = 0 # additional index
+                                            while True:
+                                                index = desc[aindex:].lower().find(tempkw)
+                                                if index != -1:  
+                                                    index += aindex
+                                                    toappend = dll.extractFloat(desc[index+len(tempkw) : index+len(tempkw)])
+                                                    if toappend:
+                                                        li.append(toappend)
+                                                        flag = False
                                                         break
+                                                    elif toappend == None:
+                                                        aindex = index + len(tempkw) 
+                                                    else: 
+                                                        break
+                                                else:
+                                                    break
                                             
             if li_len == len(li):
                 li.append('')
@@ -303,38 +302,45 @@ def scrape_stars_n_desc(lv, li):
         li.append(desc_html.prettify(formatter="html"))
     
 def db_local(mode, data = ''):
+    
+    global downloaded, keys
+
     if mode == 'delete':
         try:
             os.remove(r'assets\local.db')
+            
         except Exception as e:
-            print(e)
+            dll.ppr(e)
             dll.ppr(r"This file already doesn't exist, proceeding...")
+
+        conn = sqlite3.connect(r'assets\local.db')
+        c = conn.cursor()
         
-        
-    global downloaded
+        keys[1] = 'id PRIMARY KEY'
+        c.execute(f'CREATE TABLE IF NOT EXISTS scores ({", ".join(keys)})')
+        keys[1] = 'id'
+        return
+    
     conn = sqlite3.connect(r'assets\local.db')
     c = conn.cursor()
-        
+    
     if mode == 'load':
-        global keys
         keys[1] = 'id PRIMARY KEY'
         c.execute(f'CREATE TABLE IF NOT EXISTS scores ({", ".join(keys)})')
         keys[1] = 'id'
         c.execute('SELECT * FROM scores ORDER BY date DESC')
         rows = c.fetchall()
         column_names = [description[0] for description in c.description]
-        levelslist = []
-        for row in rows:
-            entry = {}
-            for i, value in enumerate(row):
-                entry[column_names[i]] = value
-                if column_names[i] == 'csinput':
-                    if value == 1: value = True
-                    elif value == 0: value = False 
-                entry[column_names[i]] = value
-            levelslist.append(entry)
+        levelslist = [
+            {
+                column_names[i]: (True if value == 1 else False) if column_names[i] == 'csinput' else value
+                for i, value in enumerate(row)
+            }
+            for row in rows
+        ]
         return(levelslist)
-    
+        
+            
     elif mode == 'save':
         c.execute("SELECT COUNT(id) FROM scores")
         rows_len = c.fetchone()[0]
@@ -357,7 +363,11 @@ def db_local(mode, data = ''):
             dll.ppr('WARNING: YOUR DATABASE MIGHT NOT BE COMPLETE. WIPE AND REDOWNLOAD IT AT CONFIGURATION')
 
     elif mode == 'update':
-        pass
+        c.execute("UPDATE scores SET saved = 0")
+        update_data = [(entry.split('x')[0], entry.split('x')[1]) for entry in data]
+        c.executemany("UPDATE scores SET saved = ? WHERE id = ?", update_data)
+        conn.commit()
+            
     
     conn.close()
     try:
@@ -375,8 +385,8 @@ def db_local(mode, data = ''):
 todo:
 
 
-- rework save to include better checking for broken database
-
+- deleting database doesn't work for some reason
+- saved scores for some reason don't get immediately displayed? why
 
 not mine: YES ITS MINEEE 
     O W N
