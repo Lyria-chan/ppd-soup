@@ -1,6 +1,7 @@
-import requests, zipfile, os, re, pykakasi, json, shutil, eel #, sqlite3
+import requests, zipfile, os, re, pykakasi, json, shutil, gdown
+import eel
 from niconico_dl import NicoNicoVideo
-from pytube import YouTube
+from pytubefix import YouTube
 from bs4 import BeautifulSoup
 
 session = requests.Session()
@@ -13,6 +14,11 @@ def ppr(str):
 
 # Set up the pykakasi converter
 kks = pykakasi.Kakasi()
+
+def san_win_name(filename):
+    invalid_chars = r'[\\/:\*\?"<>|]'
+    sanitized_filename = re.sub(invalid_chars, '_', filename)
+    return sanitized_filename
 
 def callPath(path = '', mode = 'python'):
     while True:
@@ -27,19 +33,17 @@ def callPath(path = '', mode = 'python'):
                 f.seek(0)
                 path = f.read()
                 f.close()
-                if mode == 'python':
-                    if not path.strip():
-                        input((r"A path, enter it at assets\path.txt and press enter to continue..."))
+                if not path.strip():
+                    callPath(path = r'C:\KHC\PPD\songs')
                 else: break
 
     return path
 
-# def massLvDl(song_ids, folder_path = callPath(), iskakasi = 'True', vquality = 1, v_url = None, folder_title = None):
     
         
 
 
-def LvDl(song_id, folder_path = callPath(), iskakasi = 'True', vquality = 1, v_url = None, folder_title = None):
+def LvDl(chart_id, folder_path = callPath(), iskakasi = True, vquality = 1, v_url = None, folder_title = None):
     global session
     for root, dirs, files in os.walk(folder_path):
         for dirname in dirs:
@@ -47,7 +51,7 @@ def LvDl(song_id, folder_path = callPath(), iskakasi = 'True', vquality = 1, v_u
             try:
                 with open(file_path, "r") as file:
                     alt_id = file.read().strip()
-                    if song_id.strip() in alt_id:
+                    if chart_id.strip() in alt_id:
                         
                         if dirname[0] == '[':
                             while True:
@@ -61,7 +65,7 @@ def LvDl(song_id, folder_path = callPath(), iskakasi = 'True', vquality = 1, v_u
                                     break
                                 except PermissionError:
                                     input("A file you're trying to access is in use, close it and press enter to continue...")
-                            ppr("Missing video found, redownloading...")
+                            ppr("Missing video found, trying to redownload...")
                         else:
                             ppr("Chart is already downloaded!")
                             file.close()
@@ -71,45 +75,34 @@ def LvDl(song_id, folder_path = callPath(), iskakasi = 'True', vquality = 1, v_u
 
     
     if not (v_url or folder_title):
-        song_url = 'https://projectdxxx.me/score/index/id/' + song_id
+        ppr("Starting download! Scraping data from the site...")
+        song_url = 'https://projectdxxx.me/score/index/id/' + chart_id
         v_url, folder_title = getLimkAndTitle(session, song_url)
+    else:
+        ppr(f"Starting download on {folder_title}...")
     # downloads the zip
-    zip_url = 'https://projectdxxx.me/score-library/download/id/' + song_id
+    zip_url = 'https://projectdxxx.me/score-library/download/id/' + chart_id
+    folder_title = san_win_name(folder_title)
     folder_title = zipDl(session, zip_url, folder_path, folder_title, iskakasi)
+
+    # downloads the video, returns state of video
+    try:
+        xflag = dlLinkHandler(v_url, folder_path, folder_title, vquality)
+    except Exception as e:
+        ppr(f"CRITICAL ERROR AT DOWNLOAD HANDLER: {e}")
+        # deletes the faulty folder
+        shutil.rmtree(os.path.join(folder_path, folder_title))
+        return -1
+    
     # writes the limk
     file_path = os.path.join(folder_path, folder_title, "limk.txt")
     
     with open(file_path, "w") as file:
-        file.write(song_id)
+        file.write(chart_id)
         file.close()
-    # now youtube magic, can return the cause other than "NO MOVIE", after first try download from niconico is attempted
-    # if that doesn't work, the level gets marked as [NO MOVIE]
-    try:
-        yt_error_check = ytDl(session, v_url, folder_path, folder_title, vquality)
-        if yt_error_check:
-            if yt_error_check == "VideoPrivate":
-                flag = 'PRIVATE'
-                xflag = '4'
-            if yt_error_check == "VideoUnavailable":
-                flag = 'UNAVAILABLE'
-                xflag = '3'
-            ppr(f"VIDEO IS {flag}: {v_url}")
-            try:
-                os.rmdir(os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
-            except: 
-                pass
-            os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
-            return xflag
-        else: xflag = '1'
-    except: # Exception as e:
-        if 'nicovideo.jp/watch/' in v_url:
-            nicoDl(session, v_url, folder_path, folder_title)
-            xflag = '1'
-        else:
-            ppr(f"MISSING VIDEO: {v_url}")
-            os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[NO MOVIE] {folder_title}'))
-            return '2'
-    ppr('Chart downloaded, proceeding...')
+
+
+    ppr('Chart downloaded, proceeding!')
     return xflag
 # =============================\================================================
 # =============================\================================================
@@ -138,47 +131,96 @@ def zipDl(session, url, folder_path, folder_title, iskakasi):
         alt_folder_title = zip_ref.namelist()[0].split("/",1)[0]
         zip_ref.close()
     os.remove(os.path.join(folder_path, 'folder.zip'))
-    corrupted = "╖δα╡σ±┼ªéîàÄⁿ¬ëÅ╣âô"
+    corrupted = "╖δα╡σ±┼ªéîàÄⁿ¬ëÅ╣âôÅù"
     if any(char in alt_folder_title for char in corrupted):
         if iskakasi:
-            folder_title = translateAndCapitalize(folder_title)
+            folder_title = san_win_name(translateAndCapitalize(folder_title))
+            
     else:
         if iskakasi:
-            folder_title = translateAndCapitalize(alt_folder_title)
-    os.rename(os.path.join(folder_path, alt_folder_title), os.path.join(folder_path, folder_title))
-    return folder_title
-        
+            folder_title = san_win_name(translateAndCapitalize(alt_folder_title))
+    def altLoop(n, display = ''):
+        if n != 0: display = n
+        try:
+            os.rename(os.path.join(folder_path, alt_folder_title), os.path.join(folder_path, folder_title + " " + str(display)))
+            a = f"{folder_title} {str(display)}".strip()
+            return a
+        except Exception as e:
+            print(e)
+            n += 1
+            if n<9:
+                return altLoop(n)
+            else:
+                a = f"{folder_title}".strip()
+                return a
+    a = altLoop(0, '')
+    return a
 
-def nicoDl(session, url, folder_path, folder_title):
+        
+def dlLinkHandler(v_url, folder_path, folder_title, vquality = 1):
+        # now youtube magic, can return the cause other than "NO MOVIE"
+    # if that doesn't work, the level gets marked as [NO MOVIE]
+    if 'youtu' in v_url:
+            flag = ytDl(v_url, folder_path, folder_title, vquality)
+            if flag:
+                xflag = '3'
+                if flag == "ERROR": flag = 'UNAVAILABLE'
+                elif flag == "LOGIN_REQUIRED": 
+                    flag = 'PRIVATED'
+                    xflag = '4'
+                try:
+                    os.rmdir(os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
+                except: 
+                    pass
+                os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
+                return xflag
+    
+    elif 'drive.google' in v_url:
+        gdriveDl(v_url, folder_path, folder_title)
+    elif 'nicovideo.jp/watch/' in v_url:
+        nicoDl(v_url, folder_path, folder_title)
+    else:
+        ppr(f"UNSUPPORTED VIDEO TYPE: {v_url}")
+        os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[NO MOVIE] {folder_title}'))
+        return '2'
+    return '1'
+
+
+def nicoDl(url, folder_path, folder_title):
     # download for videos on niconico, takes longer than from yt
-    ppr('Zip downloaded, proceeding to niconico download...')
+    ppr('Zip downloaded, proceeding to niconico download... Warning! This might take a while.')
     with NicoNicoVideo(url, log=True) as nico:
         data = nico.get_info()
         nico.download(os.path.join(folder_path, folder_title, data["video"]["title"] + "movie.mp4"))
     
 
-def ytDl(session, url, folder_path, folder_title, vquality = 1):
+def ytDl(url, folder_path, folder_title, vquality = 1):
     # download for videos on youtube, most videos use this
     ppr('Zip downloaded, proceeding to youtube download...')
     if 'youtu.be/' in url:
         url = 'https://www.youtube.com/watch?v=' + url.split("/")[-1]
     yt = YouTube(url)
-    if 'This video is private' in yt.embed_html:
-        return "VideoPrivate"
-    # ppr(yt.embed_html)
-    elif 'This video is unavailable'in yt.embed_html:
-        return "VideoUnavailable"
-    print('check')
-    quals = [1080, 720, 480, 360, 240, 144]
-    for num in range(vquality, 6):
-        video = yt.streams.filter(mime_type= "video/mp4", res = f'{quals[num]}p').first()
-        if video != None:
-            video.download(os.path.join(folder_path, folder_title))
-            break
-        if video == None and num == 5:
-            ppr('cos poszlo nie tak. ups')
+    # open(r"D:\\KHC\\PPD\\songs\\debug.txt", "w").write(yt.embed_htm).close()
+    if yt.vid_info['playabilityStatus']['status'] == 'OK':
+        quals = [1080, 720, 480, 360, 240, 144]
+        for num in range(vquality, 6):
+            return
+            video = yt.streams.filter(mime_type= "video/mp4", res = f'{quals[num]}p').first()
+            if video != None:
+                video.download(os.path.join(folder_path, folder_title))
+                break
+            if video == None and num == 5:
+                ppr('cos poszlo nie tak. ups')
+                return 'NO'
+    else:
+        ppr(f"{yt.vid_info['playabilityStatus']['reason']}: {url}")
+        return yt.vid_info['playabilityStatus']['status']
     return None
                     
+def gdriveDl(v_url, folder_path, folder_title):
+    ppr('Zip downloaded, proceeding to google drive download... Warning! This might take a while.')
+    dest = os.path.join(folder_path, folder_title, "movie.mp4")
+    gdown.download(v_url, dest, quiet=True, fuzzy=True)
 
 
 # ------------------------------------------------------- #
@@ -261,9 +303,9 @@ def extractFloat(string):
     # If no float is found, return None
     return None
 
-def refreshIdDatabase(path = callPath()):
+def refreshIdDatabase(path = callPath(), return_all = False):
     # gives the list of level IDs
-    IDS = []
+    IDS = set()
     pcheck = [i for i in path.split("\\") if i]
     if 'songs' in pcheck and not pcheck[-1] in 'songs':
         path = path[: path.index('songs\\') + 6]
@@ -277,17 +319,18 @@ def refreshIdDatabase(path = callPath()):
                             limk = limk.read()
                             if '/' in limk:
                                 limk = limk.split('/')[-1]
-                            if '[NO MOVIE]' in name: limk = '2x' + limk
-                            elif '[UNAVAILABLE MOVIE]' in name: limk = '3x' + limk
-                            elif '[PRIVATED MOVIE]' in name: limk = '4x' + limk
-                            else: 
-                                limk = '1x' + limk
+                            if return_all == False:
+                                if '[NO MOVIE]' in name: limk = '2x' + limk
+                                elif '[UNAVAILABLE MOVIE]' in name: limk = '3x' + limk
+                                elif '[PRIVATED MOVIE]' in name: limk = '4x' + limk
+                                else: 
+                                    limk = '1x' + limk
                             
                             if limk == '':
                                 ppr(f"Empty limk found in {name}, continuing...")
                                 break
                             
-                            IDS.append(limk)
+                            IDS.add(limk)
                             
                     except FileNotFoundError:
                         # ppr(f'Limk missing in {name}, continuing...')
@@ -297,9 +340,6 @@ def refreshIdDatabase(path = callPath()):
                     continue
     
     IDS = list(dict.fromkeys(IDS))
-#    if save == True:
-        
-    
     return IDS
 
 def readJson(fname, type):
@@ -315,26 +355,27 @@ def readJson(fname, type):
     return obj
     
 
-#LvDl(song_id = 'eedc939f6e667630e490288fcd1b436f', vquality = 1)
+#LvDl(chart_id = 'd4630fb51d91609dcd4af8100bf88bc8', vquality = 1)
 
 
-#ytDl(session, 'https://youtu.be/e-PlytQYPt8', r'C:\KHC\PPD\songs\testing', 'TEST', 1)
+#ytDl('https://www.youtube.com/watch?v=eSW2LVbPThw', r'C:\KHC\PPD\songs\testing', 'TEST', 1)
 
 #with requests.Session() as session:
 #     nicoDl(session, 'https://www.nicovideo.jp/watch/sm12107146', r'C:\KHC\PPD\songs\testing', 'TEST')
 
 #test = refreshIdDatabase(r'C:\KHC\PPD\songs')
 
-#print(refreshIdDatabase())
+#ppr(refreshIdDatabase())
 
 """
 to do:
 
+    FINISH WITH NO JAVASCRIPT ENABLED (PPD tower defense for testing)
 exception for no zip
-downloading from onedrive???
+in case of conflict, read data.ini to determine author
 
 for later:
-    
+
 - if no movie, delete only the prefix once the level has downloaded
 """
 
