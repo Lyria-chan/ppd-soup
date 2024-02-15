@@ -1,4 +1,4 @@
-import eel, sys
+import eel
 import PPDLevelDownloader as PPDLD
 import dllPPD as dll
         

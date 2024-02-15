@@ -1,5 +1,5 @@
 import os, requests, json
-import PySimpleGUI as sg
+#import PySimpleGUI as sg
 import dllPPD as dll
 
 def loadUrl(url):
@@ -43,7 +43,7 @@ def loadList():
 
 song_list = loadList()
 
-path = dll.callPath()
+
 # =============================================================================
 # try:
 #     with open("assets\path.json","r") as f:
@@ -66,12 +66,17 @@ path = dll.callPath()
 #     window.close()
 # =============================================================================
     
-with open("assets\path.json","w") as f:
-    json.dump(path,f)
-    
+path = dll.callPath()
+if 'songs' in path:
+    songpath = path[:path.index('songs') + 6]
+targetpath = songpath + "TARGET SCORES"
+path = targetpath # fix later!!! 
+print(path)
+dirnames = []
 for root, dirs, files in os.walk(path, topdown=False):
     for name in dirs:
-        if not name == "sound" and not '[NO MOVIE]' in name:
+        if not name == "sound" and not 'MOVIE' in name:
+            dirnames.append(name)
             try:
                 with open(os.path.join(root,name,'limk.txt'), 'r') as limk:
                     limk = limk.read()
