@@ -87,7 +87,7 @@ def LvDl(chart_id, folder_path = callPath(), iskakasi = True, vquality = 1, v_ur
 
     # downloads the video, returns state of video
     try:
-        xflag = dlLinkHandler(v_url, folder_path, folder_title, vquality)
+        xflag, folder_title = dlLinkHandler(v_url, folder_path, folder_title, vquality)
     except Exception as e:
         ppr(f"CRITICAL ERROR AT DOWNLOAD HANDLER: {e}")
         # deletes the faulty folder
@@ -160,7 +160,17 @@ def zipDl(session, url, folder_path, folder_title, iskakasi):
 def dlLinkHandler(v_url, folder_path, folder_title, vquality = 1):
         # now youtube magic, can return the cause other than "NO MOVIE"
     # if that doesn't work, the level gets marked as [NO MOVIE]
-    if 'youtu' in v_url:
+    if 'drive.google' in v_url:
+        gdriveDl(v_url, folder_path, folder_title)
+    elif 'nicovideo.jp/watch/' in v_url:
+        nicoDl(v_url, folder_path, folder_title)
+
+    else:
+        if 'youtu' not in v_url:
+            ppr(f"UNSUPPORTED VIDEO TYPE: {v_url}")
+            flag = 'NO'
+            xflag = '2'
+        else:
             flag = ytDl(v_url, folder_path, folder_title, vquality)
             if flag:
                 xflag = '3'
@@ -173,17 +183,10 @@ def dlLinkHandler(v_url, folder_path, folder_title, vquality = 1):
                 except: 
                     pass
                 os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
-                return xflag
+                return xflag, f'[{flag} MOVIE] {folder_title}'
+            return '1', folder_title
+
     
-    elif 'drive.google' in v_url:
-        gdriveDl(v_url, folder_path, folder_title)
-    elif 'nicovideo.jp/watch/' in v_url:
-        nicoDl(v_url, folder_path, folder_title)
-    else:
-        ppr(f"UNSUPPORTED VIDEO TYPE: {v_url}")
-        os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[NO MOVIE] {folder_title}'))
-        return '2'
-    return '1'
 
 
 def nicoDl(url, folder_path, folder_title):
@@ -203,8 +206,8 @@ def ytDl(url, folder_path, folder_title, vquality = 1):
     # open(r"D:\\KHC\\PPD\\songs\\debug.txt", "w").write(yt.embed_htm).close()
     if yt.vid_info['playabilityStatus']['status'] == 'OK':
         quals = [1080, 720, 480, 360, 240, 144]
+        # TU DOPRACOWAC!!!!
         for num in range(vquality, 6):
-            return
             video = yt.streams.filter(mime_type= "video/mp4", res = f'{quals[num]}p').first()
             if video != None:
                 video.download(os.path.join(folder_path, folder_title))
@@ -373,6 +376,7 @@ to do:
     FINISH WITH NO JAVASCRIPT ENABLED (PPD tower defense for testing)
 exception for no zip
 in case of conflict, read data.ini to determine author
+fix download with no sound, for example https://www.youtube.com/watch?v=n5n7CSGPzqw
 
 for later:
 
