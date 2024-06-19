@@ -239,7 +239,7 @@ with requests.Session() as session:
                               f"\nurl: {song['url']}" +
                               "\n- - - - -")
                         found_count += 1
-                        with open('assets/log.txt','a') as log:
+                        with open('assets/log.txt','a', encoding="utf-8") as log:
                             log.write(f"{song['name']}, rank {rank}, {song['url']}\n")
                         dll.LvDl(song_id, dldirectory, True, videoquality)
             checked_count += 1
