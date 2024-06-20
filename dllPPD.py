@@ -45,17 +45,24 @@ def callPath(path = '', mode = 'python'):
 
 def LvDl(chart_id, folder_path = callPath(), iskakasi = True, vquality = 1, v_url = None, folder_title = None):
     global session
+    
+    # Check if chart to be downloaded is already present in the folder path
     for root, dirs, files in os.walk(folder_path):
         for dirname in dirs:
             file_path = os.path.join(folder_path, dirname, "limk.txt")
+            
             try:
+                # Check if limk.txt matches the chart_id
                 with open(file_path, "r") as file:
                     alt_id = file.read().strip()
+                    
                     if chart_id.strip() in alt_id:
                         
+                        # If chart name starts with '[', delete it and redownload
                         if dirname[0] == '[':
                             while True:
                                 try:
+                                    # Close the file and delete the directory tree
                                     file.close()
                                     shutil.rmtree(os.path.join(folder_path, dirname))
                                     try:
@@ -64,13 +71,18 @@ def LvDl(chart_id, folder_path = callPath(), iskakasi = True, vquality = 1, v_ur
                                         pass
                                     break
                                 except PermissionError:
+                                    # Prompt user to close file being accessed
                                     input("A file you're trying to access is in use, close it and press enter to continue...")
+                            
+                            # Inform user about the missing video and attempt to redownload
                             ppr("Missing video found, trying to redownload...")
                         else:
+                            # If limk matches chart is already downloaded
                             ppr("Chart is already downloaded!")
                             file.close()
                             return '1'
             except FileNotFoundError:
+                # No "limk.txt"
                 pass
 
     
@@ -146,12 +158,19 @@ def zipDl(session, url, folder_path, folder_title, iskakasi):
             a = f"{folder_title} {str(display)}".strip()
             return a
         except Exception as e:
-            print(e)
-            n += 1
-            if n<9:
-                return altLoop(n)
+            # if limk.txt is in the folder
+            if os.path.exists(os.path.join(folder_path, folder_title + " " + str(display), "limk.txt")):
+                print(e)
+                n += 1
+                if n<9:
+                    return altLoop(n)
+                else:
+                    a = f"{folder_title}".strip()
+                    return a
             else:
-                a = f"{folder_title}".strip()
+                shutil.rmtree(os.path.join(folder_path, folder_title + " " + str(display)).strip())
+                os.rename(os.path.join(folder_path, alt_folder_title).strip(), os.path.join(folder_path, folder_title + " " + str(display).strip()))
+                a = f"{folder_title} {str(display)}".strip()
                 return a
     a = altLoop(0, '')
     return a
@@ -207,7 +226,7 @@ def ytDl(url, folder_path, folder_title, vquality = 1):
     if yt.vid_info['playabilityStatus']['status'] == 'OK':
         quals = [1080, 720, 480, 360, 240, 144]
         bitrates = [160, 128, 70, 50, 48]
-        # TU DOPRACOWAC!!!!
+        # 1080p always needs audio merging, tries to find highest quality video with audio (usually 720p)
         for num in range(vquality, 6):
             videos = yt.streams.filter(mime_type= "video/mp4", res = f'{quals[num]}p')
             video_w_audio = videos.get_highest_resolution()
@@ -218,15 +237,14 @@ def ytDl(url, folder_path, folder_title, vquality = 1):
                     break
                 video.download(os.path.join(folder_path, folder_title), 'video.mp4')
 
-                if not video.includes_audio_track:
+                if video.includes_audio_track == False:
                     ppr('Merging audio...')
                     audios = yt.streams.filter(mime_type= "audio/webm")
+                    if not audios: audios = yt.streams.filter(mime_type= "audio/mp4")
                     # choose audio with highest bitrate
                     audio = audios.desc().first()
                     audio.download(os.path.join(folder_path, folder_title), 'audio.webm')
                     # merge audio and video
-                    # os.system(f'ffmpeg -i "{os.path.join(folder_path, folder_title, "audio.webm")}" -i "{os.path.join(folder_path, folder_title, "video.mp4")}" -c copy "{os.path.join(folder_path, folder_title, san_win_name(video.title, substitute='') + ".mp4")}" > /dev/null 2>&1')
-
                     os.system(f'ffmpeg -i "{os.path.join(folder_path, folder_title, "audio.webm")}" -i "{os.path.join(folder_path, folder_title, "video.mp4")}" -c copy "{os.path.join(folder_path, folder_title, san_win_name(video.title, substitute='') + ".mp4")}" -hide_banner -loglevel error')
                     os.remove(os.path.join(folder_path, folder_title, "audio.webm"))
                     os.remove(os.path.join(folder_path, folder_title, "video.mp4"))
@@ -243,7 +261,7 @@ def gdriveDl(v_url, folder_path, folder_title):
     ppr('Zip downloaded, proceeding to google drive download... Warning! This might take a while.')
     dest = os.path.join(folder_path, folder_title, "movie.mp4")
     gdown.download(v_url, dest, quiet=True, fuzzy=True)
-
+    
 
 # ------------------------------------------------------- #
 
@@ -378,9 +396,9 @@ def readJson(fname, type):
     
 
 #LvDl(chart_id = 'd4630fb51d91609dcd4af8100bf88bc8', vquality = 1)
+# gdriveDl('https://drive.google.com/file/d/1NoF6jzrpGB8wYt1iH9MKYyPvKy5N_HV1/view?usp=sharing' , r'D:\KHC\PPD\songs\testing', 'TEST')
 
-
-# ytDl('https://www.youtube.com/watch?v=rKdwNw-d3MQ', r'D:\KHC\PPD\songs\testing', 'TEST', 0)
+# ytDl('https://www.youtube.com/watch?v=8xj1lmiCK4A', r'D:\KHC\PPD\songs\testing', 'TEST', 0)
 
 #with requests.Session() as session:
 #     nicoDl(session, 'https://www.nicovideo.jp/watch/sm12107146', r'C:\KHC\PPD\songs\testing', 'TEST')
@@ -396,6 +414,7 @@ to do:
 exception for no zip
 in case of conflict, read data.ini to determine author
 fix download with no sound, for example https://www.youtube.com/watch?v=n5n7CSGPzqw
+- if folder name already exists but without limk.txt, overwrite it
 
 for later:
 
