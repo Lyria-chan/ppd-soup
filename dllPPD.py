@@ -15,9 +15,9 @@ def ppr(str):
 # Set up the pykakasi converter
 kks = pykakasi.Kakasi()
 
-def san_win_name(filename):
+def san_win_name(filename, substitute = '_'):
     invalid_chars = r'[\\/:\*\?"<>|]'
-    sanitized_filename = re.sub(invalid_chars, '_', filename)
+    sanitized_filename = re.sub(invalid_chars, substitute, filename)
     return sanitized_filename
 
 def callPath(path = '', mode = 'python'):
@@ -203,14 +203,33 @@ def ytDl(url, folder_path, folder_title, vquality = 1):
     if 'youtu.be/' in url:
         url = 'https://www.youtube.com/watch?v=' + url.split("/")[-1]
     yt = YouTube(url)
-    # open(r"D:\\KHC\\PPD\\songs\\debug.txt", "w").write(yt.embed_htm).close()
+    # open(r"D:\\KHC\\PPD\\songs\\debug.txt", "w").write(str(yt.streams))
     if yt.vid_info['playabilityStatus']['status'] == 'OK':
         quals = [1080, 720, 480, 360, 240, 144]
+        bitrates = [160, 128, 70, 50, 48]
         # TU DOPRACOWAC!!!!
         for num in range(vquality, 6):
-            video = yt.streams.filter(mime_type= "video/mp4", res = f'{quals[num]}p').first()
+            videos = yt.streams.filter(mime_type= "video/mp4", res = f'{quals[num]}p')
+            video_w_audio = videos.get_highest_resolution()
+            video = videos.first()
             if video != None:
-                video.download(os.path.join(folder_path, folder_title))
+                if video_w_audio:
+                    video_w_audio.download(os.path.join(folder_path, folder_title))
+                    break
+                video.download(os.path.join(folder_path, folder_title), 'video.mp4')
+
+                if not video.includes_audio_track:
+                    ppr('Merging audio...')
+                    audios = yt.streams.filter(mime_type= "audio/webm")
+                    # choose audio with highest bitrate
+                    audio = audios.desc().first()
+                    audio.download(os.path.join(folder_path, folder_title), 'audio.webm')
+                    # merge audio and video
+                    # os.system(f'ffmpeg -i "{os.path.join(folder_path, folder_title, "audio.webm")}" -i "{os.path.join(folder_path, folder_title, "video.mp4")}" -c copy "{os.path.join(folder_path, folder_title, san_win_name(video.title, substitute='') + ".mp4")}" > /dev/null 2>&1')
+
+                    os.system(f'ffmpeg -i "{os.path.join(folder_path, folder_title, "audio.webm")}" -i "{os.path.join(folder_path, folder_title, "video.mp4")}" -c copy "{os.path.join(folder_path, folder_title, san_win_name(video.title, substitute='') + ".mp4")}" -hide_banner -loglevel error')
+                    os.remove(os.path.join(folder_path, folder_title, "audio.webm"))
+                    os.remove(os.path.join(folder_path, folder_title, "video.mp4"))
                 break
             if video == None and num == 5:
                 ppr('cos poszlo nie tak. ups')
@@ -361,7 +380,7 @@ def readJson(fname, type):
 #LvDl(chart_id = 'd4630fb51d91609dcd4af8100bf88bc8', vquality = 1)
 
 
-#ytDl('https://www.youtube.com/watch?v=eSW2LVbPThw', r'C:\KHC\PPD\songs\testing', 'TEST', 1)
+# ytDl('https://www.youtube.com/watch?v=rKdwNw-d3MQ', r'D:\KHC\PPD\songs\testing', 'TEST', 0)
 
 #with requests.Session() as session:
 #     nicoDl(session, 'https://www.nicovideo.jp/watch/sm12107146', r'C:\KHC\PPD\songs\testing', 'TEST')
