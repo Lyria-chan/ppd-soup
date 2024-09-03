@@ -1,8 +1,8 @@
-import eel
+import eel, os
 import PPDLevelDownloader as PPDLD
 import dllPPD as dll
-        
-        
+path = os.path.dirname(os.path.abspath(__file__))
+os.chdir(path) 
 # Set web files folder and optionally specify which file types to check for eel.expose()
 #   *Default allowed_extensions are: ['.js', '.html', '.txt', '.htm', '.xhtml']
 
@@ -35,4 +35,4 @@ try:
     eel.start('PPDweb.html', shutdown_delay=8.0)
 except OSError:
     eel.start('PPDweb.html', shutdown_delay=8.0, mode='edge')
-# Start (this blocks and enters loop)
+

@@ -328,6 +328,7 @@ def db_local(mode, data = ''):
         keys[1] = 'id PRIMARY KEY'
         c.execute(f'CREATE TABLE IF NOT EXISTS scores ({", ".join(keys)})')
         keys[1] = 'id'
+        conn.commit()
         c.execute('SELECT * FROM scores ORDER BY date DESC')
         rows = c.fetchall()
         column_names = [description[0] for description in c.description]
@@ -363,7 +364,11 @@ def db_local(mode, data = ''):
             dll.ppr('WARNING: YOUR DATABASE MIGHT NOT BE COMPLETE. WIPE AND REDOWNLOAD IT AT CONFIGURATION')
 
     elif mode == 'update':
-        c.execute("UPDATE scores SET saved = 0")
+        try:
+            c.execute("UPDATE scores SET saved = 0")
+        except:
+            db_local('load', data)
+            db_local('update')
         update_data = [(entry.split('x')[0], entry.split('x')[1]) for entry in data]
         c.executemany("UPDATE scores SET saved = ? WHERE id = ?", update_data)
         conn.commit()
