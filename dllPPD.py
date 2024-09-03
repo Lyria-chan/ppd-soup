@@ -12,8 +12,6 @@ def ppr(str):
         pass
     print(str)
 
-# Set up the pykakasi converter
-kks = pykakasi.Kakasi()
 
 def san_win_name(filename, substitute = '_'):
     invalid_chars = r'[\\/:\*\?"<>|]'
@@ -266,38 +264,30 @@ def gdriveDl(v_url, folder_path, folder_title):
 # ------------------------------------------------------- #
 
 def translateAndCapitalize(jp_name):
-    name_temp = kks.convert(jp_name)
-    name = ""
-    for item in name_temp:
-        try:
-            name += str("{} ".format(item['hepburn'].capitalize()))
-        except:
-            name = jp_name
-    name = name.replace('　',' ')
-    while '  ' in name:
-        name = name.replace('  ',' ')
-    name = name.replace('( ','(')
-    name = name.replace(' )',')')
-    name = name.replace(' ℃', '℃')
-    name = name.strip()
-    name = list(name)
-    i = 1
-    while i <= len(name):
-        if name[-i].lower() == jp_name[-i].lower():
-            name[-i] = jp_name[-i]
-        else:
-            break
-        i += 1
+
+    def to_romaji(jp_name):
+        kks = pykakasi.kakasi()
+        translated_name = ""
+        translated_name_list = kks.convert(jp_name)
+        for i in range(len(translated_name_list)):
+            translated_name += translated_name_list[i]['hepburn'].capitalize() + " "
+        return translated_name.strip()
         
-    i = 0
-    while i < len(name):
-        if name[i].lower() == jp_name[i].lower():
-            name[i] = jp_name[i]
-        else:
-            break
-        i += 1
     
-    return "".join(name)
+    japanese_pattern = re.compile(r'[\u3040-\u30FF\u4E00-\u9FFF\uFF66-\uFF9F]+')
+    japanese_substrings = japanese_pattern.findall(jp_name)
+
+    # Translate each Japanese substring using the provided translation function
+    translations = {japanese: to_romaji(japanese) for japanese in japanese_substrings}
+
+    # Replace each Japanese substring in the original text with its translation
+    translated_text = jp_name
+    for original, translated in translations.items():
+        translated_text = translated_text.replace(original, translated)
+    
+    return translated_text.strip()
+
+
 
 def checkForCS(text, author = ''):
     # read the keywords from the external file
@@ -395,29 +385,14 @@ def readJson(fname, type):
     return obj
     
 
-#LvDl(chart_id = 'd4630fb51d91609dcd4af8100bf88bc8', vquality = 1)
-# gdriveDl('https://drive.google.com/file/d/1NoF6jzrpGB8wYt1iH9MKYyPvKy5N_HV1/view?usp=sharing' , r'D:\KHC\PPD\songs\testing', 'TEST')
-
-# ytDl('https://www.youtube.com/watch?v=8xj1lmiCK4A', r'D:\KHC\PPD\songs\testing', 'TEST', 0)
-
-#with requests.Session() as session:
-#     nicoDl(session, 'https://www.nicovideo.jp/watch/sm12107146', r'C:\KHC\PPD\songs\testing', 'TEST')
-
-#test = refreshIdDatabase(r'C:\KHC\PPD\songs')
-
-#ppr(refreshIdDatabase())
-
 """
 to do:
 
-    FINISH WITH NO JAVASCRIPT ENABLED (PPD tower defense for testing)
-exception for no zip
-in case of conflict, read data.ini to determine author
-fix download with no sound, for example https://www.youtube.com/watch?v=n5n7CSGPzqw
-- if folder name already exists but without limk.txt, overwrite it
 
 for later:
 
 - if no movie, delete only the prefix once the level has downloaded
+- exception for no zip
+- in case of conflict, read data.ini to determine author (? is this needed?)
 """
 
