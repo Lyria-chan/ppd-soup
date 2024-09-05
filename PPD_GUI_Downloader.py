@@ -1,6 +1,6 @@
 import eel, os
-import PPDLevelDownloader as PPDLD
-import dllPPD as dll
+import extra_soup as PPDLD
+import extra_library as dll
 path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(path) 
 # Set web files folder and optionally specify which file types to check for eel.expose()

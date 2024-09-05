@@ -1,6 +1,6 @@
 import os, requests, json
 #import PySimpleGUI as sg
-import dllPPD as dll
+import extra_library as dll
 
 def loadUrl(url):
     for attempts in range(10):

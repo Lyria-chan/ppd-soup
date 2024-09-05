@@ -1,8 +1,10 @@
-import PPDLevelDownloader as downloader
-import dllPPD as dll
+import extra_soup as downloader
+import extra_library as dll
 
-authorwhitelist = ['siteswap', 'kazoo king', 'sach', 'blue star', 'palmtree_freak']
+# authorwhitelist = ['siteswap', 'kazoo king', 'sach', 'blue star', 'palmtree_freak']
+authorwhitelist = ['eggutastegood']
 authorblacklist = []
+path = 'D:\\KHC\\PPD\\songs\\Creator packs\\'
 
 def DlLoop(i, level):
     i += 1
