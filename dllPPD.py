@@ -90,6 +90,10 @@ def LvDl(chart_id, folder_path = callPath(), iskakasi = True, vquality = 1, v_ur
         v_url, folder_title = getLimkAndTitle(session, song_url)
     else:
         ppr(f"Starting download on {folder_title}...")
+    # NICONICO IS BROKEN, REMOVE WHEN FIXED
+    if 'nicovideo.jp/watch/' in v_url:
+        ppr('Niconico download disabled right now, sorry! Skipping...')
+        return '0' 
     # downloads the zip
     zip_url = 'https://projectdxxx.me/score-library/download/id/' + chart_id
     folder_title = san_win_name(folder_title)
@@ -180,7 +184,10 @@ def dlLinkHandler(v_url, folder_path, folder_title, vquality = 1):
     if 'drive.google' in v_url:
         gdriveDl(v_url, folder_path, folder_title)
     elif 'nicovideo.jp/watch/' in v_url:
-        nicoDl(v_url, folder_path, folder_title)
+        # nicoDl(v_url, folder_path, folder_title)
+        ppr('Niconico download disabled right now, sorry! Skipping...')
+        flag = 'NICO - NO'
+        xflag = '5'
 
     else:
         if 'youtu' not in v_url:
@@ -189,30 +196,34 @@ def dlLinkHandler(v_url, folder_path, folder_title, vquality = 1):
             xflag = '2'
         else:
             flag = ytDl(v_url, folder_path, folder_title, vquality)
-            if flag:
-                xflag = '3'
-                if flag == "ERROR": flag = 'UNAVAILABLE'
-                elif flag == "LOGIN_REQUIRED": 
-                    flag = 'PRIVATED'
-                    xflag = '4'
-                try:
-                    os.rmdir(os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
-                except: 
-                    pass
-                os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
-                return xflag, f'[{flag} MOVIE] {folder_title}'
-            return '1', folder_title
+    if flag:
+        if flag == "ERROR": 
+            flag = 'UNAVAILABLE'
+            xflag = '3'
+        elif flag == "LOGIN_REQUIRED": 
+            flag = 'PRIVATED'
+            xflag = '4'
+        try:
+            os.rmdir(os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
+        except: 
+            # ppr(f"Folder {folder_title} not found, continuing...")
+            pass
+        os.rename(os.path.join(folder_path, folder_title), os.path.join(folder_path, f'[{flag} MOVIE] {folder_title}'))
+        return xflag, f'[{flag} MOVIE] {folder_title}'
+    return '1', folder_title
 
     
 
 
-def nicoDl(url, folder_path, folder_title):
-    # download for videos on niconico, takes longer than from yt
-    ppr('Zip downloaded, proceeding to niconico download... Warning! This might take a while.')
-    with NicoNicoVideo(url, log=True) as nico:
-        data = nico.get_info()
-        nico.download(os.path.join(folder_path, folder_title, data["video"]["title"] + "movie.mp4"))
-    
+# def nicoDl(url, folder_path, folder_title):
+#     # download for videos on niconico, takes longer than from yt
+#     ppr('Zip downloaded, proceeding to niconico download... Warning! This might take a while.')
+#     with NicoNicoVideo(url, log=True) as nico:
+#         data = nico.get_info()
+#         nico.download(os.path.join(folder_path, folder_title, data["video"]["title"] + "movie.mp4"))
+
+
+
 
 def ytDl(url, folder_path, folder_title, vquality = 1):
     # download for videos on youtube, most videos use this
@@ -388,6 +399,9 @@ def readJson(fname, type):
 """
 to do:
 
+- add config
+- add niconico choice if skip or download no video config
+- shut up and feel my vibes (target score downloader) broken? no limk generates
 
 for later:
 
