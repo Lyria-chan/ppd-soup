@@ -181,6 +181,8 @@ def zipDl(session, url, folder_path, folder_title, iskakasi):
 def dlLinkHandler(v_url, folder_path, folder_title, vquality = 1):
         # now youtube magic, can return the cause other than "NO MOVIE"
     # if that doesn't work, the level gets marked as [NO MOVIE]
+    flag = ''
+    xflag = 0
     if 'drive.google' in v_url:
         gdriveDl(v_url, folder_path, folder_title)
     elif 'nicovideo.jp/watch/' in v_url:
@@ -269,6 +271,10 @@ def ytDl(url, folder_path, folder_title, vquality = 1):
 def gdriveDl(v_url, folder_path, folder_title):
     ppr('Zip downloaded, proceeding to google drive download... Warning! This might take a while.')
     dest = os.path.join(folder_path, folder_title, "movie.mp4")
+    try:
+        os.makedirs(os.path.join(folder_path, folder_title))
+    except FileExistsError:
+        pass
     gdown.download(v_url, dest, quiet=True, fuzzy=True)
     
 
