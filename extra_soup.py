@@ -132,12 +132,12 @@ def save_to_array(ll, saved = '', mode = 'def', maxpages = 0):
         else: 
             li.append('0')
         li.append(lv.find('a').get('title'))
-        li.append(dll.translateAndCapitalize(li[-1]))
+        li.append(dll.transcribeToRomaji(li[-1]))
         
         # author ID + jp author + author + CSInput stuff
         li.append(lv.select_one(":nth-child(2)").find('a').get('href').split("/")[-1])
         li.append([line for line in lv_text.split('\n') if line.strip()][2].strip())
-        li.append(dll.translateAndCapitalize(li[-1]))
+        li.append(dll.transcribeToRomaji(li[-1]))
         li.append(dll.checkForCS(lv_text, li[5]))
         
         

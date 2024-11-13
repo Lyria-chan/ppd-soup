@@ -17,16 +17,11 @@ startfrom = 0
 
 
 # here is the rest of the code. good luck analyzing it if you want to
-kks = pykakasi.kakasi()
+
 def addIDToTxt(id, name):
     # open file specified in path /assets/{name}.txt
     with open(f'assets/{name}.txt', 'a') as f:
         f.write('\n' + str(id))
-
-    
-
-
-
     pass
 
 def loadUrl(url, session):
@@ -56,31 +51,14 @@ def loadList():
     html_list = html_list[:-1]
 
     song_list = []
-    for song in range(len(html_list)):
-        html_list[song] = html_list[song].split(",",1)
+    for song_num in range(len(html_list)):
+        html_list[song_num] = html_list[song_num].split(",",1)
         song_list.append({})
-        for data in range(len(html_list[song])):
-            html_list[song][data] = html_list[song][data][1:-1]
-        song_list[song]['url'] = "https://projectdxxx.me/score/index/id/" + html_list[song][0]
-        song_list[song]['name'] = html_list[song][1]
-    
-    for song in song_list:
-        name_temp = kks.convert(song['name'])
-        name = ""
-        for item in name_temp:
-            try:
-                name += str("{} ".format(item['hepburn'].capitalize()))
-            except:
-                name = song['name']
-        if name[-1] == ' ':
-            name = name[:-1]
-        name = name.replace('　',' ')
-        if '  ' in name:
-            while '  ' in name:
-                name = name.replace('  ',' ')
-        name = name.replace('( ','(')
-        name = name.replace(' )',')')
-        song['name'] = name
+        for data in range(len(html_list[song_num])):
+            html_list[song_num][data] = html_list[song_num][data][1:-1]
+        song_list[song_num]['url'] = "https://projectdxxx.me/score/index/id/" + html_list[song_num][0]
+        song_list[song_num]['name'] = html_list[song_num][1]
+        song_list[song_num]['name'] = dll.transcribeToRomaji(song_list[song_num]['name'])
     
     return song_list
 
@@ -95,22 +73,8 @@ def timeString(time):
         time = "1 second"
     return time
 
-def updateSongs(song_list_new):
-    with open("assets/target_scores.json","r") as song_list_old:
-        song_list_old = json.loads(song_list_old.read())
-    
-    song_list_updated = []
-    for song_new in song_list_new:
-        if not any(song_new['url'] == song_old['url'] for song_old in song_list_old):
-            song_list_updated.append(song_new)
-    return song_list_updated
-
 
 song_list = loadList()
-
-# why is this here?? i shall find out someday
-# with open("assets/target_scores.json","w") as song_list_old:
-#     json.dump(song_list,song_list_old)
 
 csinput_keyword_list = [
     {'raw':'csinput','display':'CSInput'},
@@ -130,53 +94,38 @@ csinput_keyword_list = [
     Charters covered by the standard csinput arguments:
         - Siteswap
         - EgguTasteGood
-    
-    
-    
 """
-print("Choose search mode:" +
-      "\n 1) CSInput search (default, if not sure choose this)" +
-      "\n 2) additional author ID search" +
-      "\n 3) author ID search without CSInput" +
-      "\n 4) custom website content search")
-mode = int(input())
+print("Choose what to download:" +
+      "\n 1) CSInput charts (default, if not sure choose this)" +
+      "\n 2) All charts" +
+      "\n 3) Charts by author ID" +
+      "\n 4) Custom content search")
 
-#newOnly = input("Do you want to search from [F]ull list of songs or only from [n]ew songs?\n")
-#if newOnly == "n":
-#    newOnly = True
-#else:
-#    newOnly = False
-newOnly = False
+mode = int(input())
 
 checked_count = 0
 found_count = 0
 keyword_not_list = []
 keyword_list = []
 
-if mode == 1:
-    keyword_list = csinput_keyword_list
-elif 2 <= mode <= 4:
-    if mode == 2 or mode == 3:
-        key = "author ID"
-        key_start = "投稿者:\n      <a href=\"/user/index/id/"
+match mode:
+    case 1:
+        keyword_list = csinput_keyword_list
+    case 2:
+        keyword_list = ['']
+    case 3, 4:
         if mode == 3:
-            keyword_not_list = csinput_keyword_list
-    else:
-        key = "keyword"
-        key_start = ""
-    while True:
-        keyword = {}
-        keyword['display'] = input(f"Input {key}: ")
-        keyword['raw'] = key_start + keyword['display'].lower()
-        keyword_list.append(keyword)
-        choice = input(f"Do you want to add more {key}s? [Y/n] ")
-        if choice == "n":
-            break
-else:
-    mode /= 0
-    
-if newOnly:
-    song_list = updateSongs(song_list)
+            key = "author ID"
+            key_start = "投稿者:\n      <a href=\"/user/index/id/"
+        while True:
+            keyword = {}
+            keyword['display'] = input(f"Input {key}: ")
+            keyword['raw'] = key_start + keyword['display'].lower()
+            keyword_list.append(keyword)
+            choice = input(f"Do you want to add more {key}s? [Y/n] ")
+            if choice == "n":
+                break
+
 
 time_start = round(time(),2)
 
@@ -185,7 +134,7 @@ with open('assets/log.txt','a') as log:
     if mode == 1:
         log.write("\nSearching for CSInput")
     else:
-        log.write("\nSearching for following author IDs:\n")
+        log.write("\nSearching for the following:\n")
         log_keywords = ""
         for keyword in keyword_list:
             log_keywords += f"{keyword['display']}, "
@@ -197,8 +146,9 @@ with requests.Session() as session:
     cs_local_ids = dll.refreshIdDatabase(fr'{dldirectory}TARGET SCORES', return_all = True)
     no_cs_local_ids = open(r'assets/target_scores_no_csinput.txt','r').read().splitlines()
 
-
-    local_ids = cs_local_ids + no_cs_local_ids
+    local_ids = cs_local_ids
+    if mode == 1:
+        local_ids += no_cs_local_ids
     real_checked_count = None
     for song in song_list[startfrom:]:
         song_id = song['url'].split('/')[-1]
@@ -211,15 +161,6 @@ with requests.Session() as session:
             if real_checked_count == None: real_checked_count = 0
             html = str(loadUrl(song['url'], session))
             
-            # for keyword, keyword_not in zip(keyword_list, keyword_not_list):
-            #     print(keyword_list)
-            #     if keyword['raw'] in html.lower() and not keyword_not['raw'] in html.lower():
-            #         print(f"\rKeyword \"{keyword['display']}\" found in \"{song['name']}\", rank {checked_count+1}" + 20 * " " +
-            #               f"\nurl: {song['url']}" +
-            #               "\n- - - - -")
-            #         found_count += 1
-            #         with open('log.txt','a') as log:
-            #             log.write(f"{song['name']}, rank {checked_count+1}, {song['url']}\n")
             rank = checked_count + 1 + startfrom
             old_found_count = found_count
             for keyword in keyword_list:

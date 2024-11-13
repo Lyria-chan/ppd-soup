@@ -148,11 +148,11 @@ def zipDl(session, url, folder_path, folder_title, iskakasi):
     corrupted = "╖δα╡σ±┼ªéîàÄⁿ¬ëÅ╣âôÅù"
     if any(char in alt_folder_title for char in corrupted):
         if iskakasi:
-            folder_title = san_win_name(translateAndCapitalize(folder_title))
+            folder_title = san_win_name(transcribeToRomaji(folder_title))
             
     else:
         if iskakasi:
-            folder_title = san_win_name(translateAndCapitalize(alt_folder_title))
+            folder_title = san_win_name(transcribeToRomaji(alt_folder_title))
     def altLoop(n, display = ''):
         if n != 0: display = n
         try:
@@ -261,7 +261,7 @@ def ytDl(url, folder_path, folder_title, vquality = 1):
                     os.remove(os.path.join(folder_path, folder_title, "video.mp4"))
                 break
             if video == None and num == 5:
-                ppr('cos poszlo nie tak. ups')
+                ppr('something went wrong. oops')
                 return 'NO'
     else:
         ppr(f"{yt.vid_info['playabilityStatus']['reason']}: {url}")
@@ -280,7 +280,7 @@ def gdriveDl(v_url, folder_path, folder_title):
 
 # ------------------------------------------------------- #
 
-def translateAndCapitalize(jp_name):
+def transcribeToRomaji(jp_name):
 
     def to_romaji(jp_name):
         kks = pykakasi.kakasi()
@@ -289,7 +289,7 @@ def translateAndCapitalize(jp_name):
         for i in range(len(translated_name_list)):
             translated_name += translated_name_list[i]['hepburn'].capitalize() + " "
         return translated_name.strip()
-        
+    
     
     japanese_pattern = re.compile(r'[\u3040-\u30FF\u4E00-\u9FFF\uFF66-\uFF9F]+')
     japanese_substrings = japanese_pattern.findall(jp_name)
