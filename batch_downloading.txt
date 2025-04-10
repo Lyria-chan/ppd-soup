@@ -1,0 +1,3 @@
+# Here enter the IDs or links of levels you want to download, line by line
+# You can also add authors be name, like: @siteswap or @blue star
+# Everything after # will be ignored
