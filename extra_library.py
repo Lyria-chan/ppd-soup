@@ -88,6 +88,9 @@ def LvDl(chart_id, folder_path = callPath(), iskakasi = True, vquality = 1, v_ur
         ppr("Starting download! Scraping data from the site...")
         song_url = 'https://projectdxxx.me/score/index/id/' + chart_id
         v_url, folder_title = getLimkAndTitle(session, song_url)
+        if v_url == 0:
+            ppr('The ID of the chart was invalid or it was privated! Skipping...')
+            return '0'
     else:
         ppr(f"Starting download on {folder_title}...")
     # NICONICO IS BROKEN, REMOVE WHEN FIXED
@@ -126,7 +129,10 @@ def getLimkAndTitle(session, url):
     # searches for for yt/nico download video link, should become obsolete
     r = session.get(url)
     soup = BeautifulSoup(r.content, 'html.parser')
-    limk = soup.label.next_sibling.next_sibling['value']
+    try:
+        limk = soup.label.next_sibling.next_sibling['value']
+    except:
+        return [0,0]
     title = soup.find("h3", class_='panel-title pull-left').get_text().strip()
     return limk, title
 
