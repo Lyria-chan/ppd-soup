@@ -149,9 +149,10 @@ def zipDl(session, url, folder_path, folder_title, iskakasi):
     with zipfile.ZipFile(os.path.join(folder_path, 'folder.zip'), 'r') as zip_ref:
         zip_ref.extractall(path=folder_path)
         alt_folder_title = zip_ref.namelist()[0].split("/",1)[0]
+        alt_folder_title = san_win_name(alt_folder_title)
         zip_ref.close()
     os.remove(os.path.join(folder_path, 'folder.zip'))
-    corrupted = "╖δα╡σ±┼ªéîàÄⁿ¬ëÅ╣âôÅù░╣╜╦┐ΓÑ"
+    corrupted = "╖δα╡σ±┼ªéîàÄⁿ¬ëÅ╣âôÅù░╣╜╦┐ΓÑ≈Γ┘½"
     # check if the folder title contains any of the corrupted characters, if so, rename it to the original title
     if any(char in alt_folder_title for char in corrupted):
         if iskakasi:
