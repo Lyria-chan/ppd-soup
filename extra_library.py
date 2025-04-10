@@ -151,7 +151,8 @@ def zipDl(session, url, folder_path, folder_title, iskakasi):
         alt_folder_title = zip_ref.namelist()[0].split("/",1)[0]
         zip_ref.close()
     os.remove(os.path.join(folder_path, 'folder.zip'))
-    corrupted = "╖δα╡σ±┼ªéîàÄⁿ¬ëÅ╣âôÅù"
+    corrupted = "╖δα╡σ±┼ªéîàÄⁿ¬ëÅ╣âôÅù░╣╜╦┐ΓÑ"
+    # check if the folder title contains any of the corrupted characters, if so, rename it to the original title
     if any(char in alt_folder_title for char in corrupted):
         if iskakasi:
             folder_title = san_win_name(transcribeToRomaji(folder_title))
